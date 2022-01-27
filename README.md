@@ -18,14 +18,13 @@ For a simple example to simulate 100 genes and 50 cells of one cell group with g
 library(aLDG)
 
 #===== bivariate dependence measure ======#
-x = rnorm(10)
-y = x + rnorm(10,0,0.5) 
-ans = bidep(x,y,all=TRUE) # compute for all methods
-ans = bidep(x,y,methods=c('pearson','hsic','aLDG')) # compute for selected methods
+x = rnorm(100)
+anslinear = bidep(x, x + rnorm(100,0,0.1) ,methods=c('pearson','taustar','hsic','dcor','aldg')) # compute for selected methods
+ansquad = bidep(x, x^2 + rnorm(100,0,0.1) ,methods=c('pearson','taustar','hsic','dcor','aldg')) # compute for selected methods
 
 #===== pairwise dependence matrix for multivariate data ======#
 dat = matrix(rnorm(100),5,20)
-ans = matdep(dat,methods=c('pearson','hsic','aLDG'), ncores=10) # compute for selected methods
+ans = matdep(dat,methods=c('pearson','taustar','hsic','dcor','aldg')), ncores=NULL) # compute for selected methods
 ```
 
 ## Reference:

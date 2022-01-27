@@ -131,7 +131,7 @@ bidep<-function(x, y, sx = NULL, sy = NULL, methods=NULL, all = FALSE,
         if(!is.null(re[[2]]))t = re[[2]]
         else{
           if(stat=='normgap'){
-            t = qnorm(1-1/(nt)^cutoff)/(wd*sqrt(sd(xt)*sd(yt))*nt^(1/3))
+            t = qnorm(1-1/(nt)^cutoff)/nt^(1/3)
           }
           if(stat=='probnormgap'){
             t =qnorm(1-1/(nt)^cutoff)
