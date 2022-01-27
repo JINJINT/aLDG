@@ -1,0 +1,10 @@
+Package: rankPatterns
+Type: Package
+Title: Coexpression measures by matching local rank patterns
+Version: 1.0
+Date: 2014-09-10
+Author: Y.X. Rachel Wang, Jane W. Liang
+Maintainer: Y.X. Rachel Wang <rachelwang@stat.berkeley.edu>
+Description: 
+License:
+Packaged: 2014-12-01 05:07:59 UTC; rwang

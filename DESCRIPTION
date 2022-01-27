@@ -1,0 +1,52 @@
+Package: aLDG
+Type: Package
+Title: Compute and evaluate the bivariate dependence
+Version: 0.0.99
+Author: Jinjin Tian
+Maintainer: Jinjin Tian <jinjint@andrew.cmu.edu>
+Description:
+Depends:
+    R (>= 4.0)
+Imports:
+    pbmcapply,
+    parallel,
+    foreach,
+    doSNOW,
+    progress,
+    utils,
+    energy,
+    rdist,
+    dHSIC,
+    minerva,
+    doBy,
+    SC3,
+    TauStar,
+    Hmisc,
+    mvtnorm,
+    ggplot2,
+    cowplot,
+    ggpubr,
+    ggExtra,
+    tidyverse,
+    latex2exp,
+    reshape2,
+    NMF,
+    pheatmap,
+    gridExtra,
+    rgl,
+    ggfortify,
+    grid,
+    stats, 
+    matrixcalc,
+    VineCopula,
+    ESCO,
+    pracma,
+    MASS,
+    abind
+License: GPL-3 + file LICENSE    
+RoxygenNote: 7.1.1
+Encoding: UTF-8
+VignetteBuilder: knitr
+Language: en-GB
+LazyData: TRUE 
+Config/testthat/edition: 2
