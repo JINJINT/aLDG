@@ -18,6 +18,7 @@ Imports:
     rdist,
     dHSIC,
     minerva,
+    HHG,
     doBy,
     SC3,
     TauStar,

@@ -1,6 +1,93 @@
-
+#' Function to simulate different bivariate dependency
+#'
+#'
+#' @param n: a integer specify the number of samples to be simulated
+#' @param type: a character specify the type of dependency
+#' @param eps: the noise level
+#' @return a list of two vectors
+#' @examples
+#' # Load example data
+#' ans = simubi(100,'linear',0.3)
+#' plot(ans$x, ans$y)
+#' @rdname simubi
 #' @export
-# gaussian mixture
+simubi<-function(n=300, type='linear', eps=0.3){
+  if(type=='linear')dat = mgc.sims.linear(n,1,eps)
+  if(type=='exp')dat = mgc.sims.exp(n,1,eps)
+  if(type=='cubic')dat = mgc.sims.cubic(n,1,eps)
+  if(type=='gauss')dat = mgc.sims.joint(n,1,eps)
+  if(type=='step')dat = mgc.sims.step(n,1,eps)
+  if(type=='quad')dat = mgc.sims.quad(n,1,eps)
+  if(type=='wshape')dat = mgc.sims.wshape(n,1,eps)
+  if(type=='spiral')dat = mgc.sims.spiral(n,1,eps)
+  if(type=='ubern')dat = mgc.sims.ubern(n,1,eps)
+  if(type=='log')dat = mgc.sims.log(n,1,eps)
+  if(type=='4root')dat = mgc.sims.4root(n,1,eps)
+  if(type=='sine4pi')dat = mgc.sims.sine(n,1,4,1)
+  if(type=='sine16pi')dat = mgc.sims.sine(n,1,16,0.5)
+  if(type=='square')dat = mgc.sims.square(n,1,eps)
+  if(type=='2parab')dat = mgc.sims.2parab(n,1,eps)
+  if(type=='circle')dat = mgc.sims.circle(n,1,eps)
+  if(type=='ellipse')dat = mgc.sims.ellipse(n,5,eps)
+  if(type=='diamond')dat = mgc.sims.diamond(n,1,eps)
+  if(type=='multi')dat = mgc.sims.multi(n,1)
+  if(type=='indep')dat = mgc.sims.indep(n,1)
+  if(grepl('gauss', type, fixed = TRUE) & !(grepl('hard', type, fixed = TRUE))){
+    vec = strsplit(type,split='')[[1]]
+    groups = vec[6]
+    depgroups = vec[7]
+    print(groups)
+    print(depgroups)
+    dat = sims.gaussmix(n, k=groups, s = depgroups)
+  }
+  if(grepl('nb', type, fixed = TRUE) & !(grepl('hard', type, fixed = TRUE)) & ! grepl('drop', type, fixed = TRUE)){
+    vec = strsplit(type,split='')[[1]]
+    groups = vec[3]
+    depgroups = vec[4]
+    print(groups)
+    print(depgroups)
+    dat = sims.nbmix(n, k=groups, s = depgroups)
+  }
+  if(grepl('gauss', type, fixed = TRUE) & grepl('hard', type, fixed = TRUE)){
+    vec = strsplit(type,split='')[[1]]
+    groups = vec[10]
+    depgroups = vec[11]
+    print(groups)
+    print(depgroups)
+    dat = sims.gausshardmix(n, k=groups, s = depgroups)
+  }
+  if(grepl('nb', type, fixed = TRUE) & grepl('hard', type, fixed = TRUE) & !grepl('drop', type, fixed = TRUE)){
+    vec = strsplit(type,split='')[[1]]
+    groups = vec[7]
+    depgroups = vec[8]
+    print(groups)
+    print(depgroups)
+    dat = sims.nbhardmix(n, k=groups, s = depgroups)
+  }
+  if(grepl('nb', type, fixed = TRUE) & grepl('hard', type, fixed = TRUE) & grepl('drop', type, fixed = TRUE)){
+    vec = strsplit(type,split='')[[1]]
+    groups = vec[11]
+    depgroups = vec[12]
+    print(groups)
+    print(depgroups)
+    dp = as.numeric(vec[length(vec)])/10
+    dat = sims.nbharddropmix(n, k=groups, s=depgroups, dp)
+  }
+  
+  if(is.null(dim(dat[[1]])))x <- dat[[1]]
+  else x <- dat[[1]][,1]
+  
+  if(is.null(dim(dat[[2]])))y <- dat[[2]]
+  else y <- dat[[2]][,1]
+  
+  if(grepl('nb', type, fixed = TRUE)){
+    x = log2(x+1)
+    y = log2(y+1)
+  }
+  return (list(x=x,y=y))
+}
+
+
 sims.gaussmix<-function(n,k,s){
   if(k==3){
     mean1 = c(0,0)
@@ -39,16 +126,15 @@ sims.gaussmix<-function(n,k,s){
     corrlist = list(corr1, corr2, corr3, corr4)
     p = c(0.25,0.25,0.25,0.25)
   }
-  data = sim_mix(distrlist=c('norm','norm','norm','norm'),
-                 n = n, d = 2, prob = p,
-                 corrlist = corrlist,
-                 para1list = para1list,
+  data = sim_mix(distrlist=c('norm','norm','norm','norm'), 
+                 n = n, d = 2, prob = p, 
+                 corrlist = corrlist, 
+                 para1list = para1list, 
                  para2list = para2list)
   dat = data[[1]]
   return(list(X =dat[1,],Y = dat[2,]))
 }
 
-#' @export
 sims.nbmix<-function(n, k, s){
   if(k==3){
     mean1 = c(20,20)
@@ -87,15 +173,15 @@ sims.nbmix<-function(n, k, s){
     corrlist = list(corr1, corr2, corr3, corr4)
     p = c(0.25,0.25,0.25,0.25)
   }
-
-  data_nb = sim_mix(distrlist=c('nbinom','nbinom','nbinom','nbinom'),
-                    n=n, d = 2, prob = p, corrlist = corrlist,
+  
+  data_nb = sim_mix(distrlist=c('nbinom','nbinom','nbinom','nbinom'), 
+                    n=n, d = 2, prob = p, corrlist = corrlist, 
                     para1list = para1list, para2list = para2list)
   dat_nb = data_nb[[1]]
   return(list(X = dat_nb[1,], Y = dat_nb[2,]))
 }
 
-#' @export
+
 sims.gausshardmix<-function(n,k,s){
   if(k==3){
     mean1 = c(0,0)
@@ -134,16 +220,15 @@ sims.gausshardmix<-function(n,k,s){
     corrlist = list(corr1, corr2, corr3, corr4)
     p = c(0.1,0.1,0.1,0.7)
   }
-  data = sim_mix(distrlist=c('norm','norm','norm','norm'),
-                 n = n, d = 2, prob = p,
-                 corrlist = corrlist,
-                 para1list = para1list,
+  data = sim_mix(distrlist=c('norm','norm','norm','norm'), 
+                 n = n, d = 2, prob = p, 
+                 corrlist = corrlist, 
+                 para1list = para1list, 
                  para2list = para2list)
   dat = data[[1]]
   return(list(X =dat[1,],Y = dat[2,]))
 }
 
-#' @export
 sims.nbhardmix<-function(n, k, s){
   if(k==3){
     mean1 = c(20,20)
@@ -182,16 +267,15 @@ sims.nbhardmix<-function(n, k, s){
     corrlist = list(corr1, corr2, corr3, corr4)
     p = c(0.1,0.1,0.4,0.4)
   }
-  data_nb = sim_mix(distrlist=c('nbinom','nbinom','nbinom','nbinom'),
-                    n=n, d = 2, prob = p, corrlist = corrlist,
+  data_nb = sim_mix(distrlist=c('nbinom','nbinom','nbinom','nbinom'), 
+                    n=n, d = 2, prob = p, corrlist = corrlist, 
                     para1list = para1list, para2list = para2list)
   dat_nb = data_nb[[1]]
   return(list(X = dat_nb[1,], Y = dat_nb[2,]))
 }
 
-#' @export
 sims.nbharddropmix<-function(n, k, s, dp){
-
+  
   mean1 = c(20,30)
   mean2 = c(50,30)
   mean3 = c(1,3)
@@ -210,9 +294,9 @@ sims.nbharddropmix<-function(n, k, s, dp){
   para2list = list(sig1, sig2, sig3, sig4)
   corrlist = list(corr1, corr2, corr3, corr4)
   p = c(0.15,0.15,0.35,0.35)
-
-  data_nb = sim_mix(distrlist=c('nbinom','nbinom','nbinom','nbinom'),
-                    n=n, d = 2, prob = p, corrlist = corrlist,
+  
+  data_nb = sim_mix(distrlist=c('nbinom','nbinom','nbinom','nbinom'), 
+                    n=n, d = 2, prob = p, corrlist = corrlist, 
                     para1list = para1list, para2list = para2list)
   dat_nb = data_nb[[1]]
   label = data_nb[[2]]
@@ -224,9 +308,133 @@ sims.nbharddropmix<-function(n, k, s, dp){
 }
 
 
-#======== simulate different shapes based on unif distribution and normal noise
+sim_joint<-function(Rho, d,n,distr='norm', para1=NULL, para2=NULL){
+  if(!matrixcalc::is.positive.definite(Rho)){
+    cat('input corr matrix is not positive definite, thus doing correction..')
+    Rho = makespd(Rho)
+  }
+  Col = chol(Rho)
+  copula = matrix(rnorm(d*n), ncol = n)
+  copula = t(Col) %*% copula
+  copula = pnorm(copula)
+  
+  single<-function(i){
+    if(distr=='unif'){
+      if(is.null(para1))para1 = 0
+      if(is.null(para2))para2 = 1
+      x=qunif(copula[,i], min = para1, max = para2)
+    }
+    if(distr=='norm'){
+      if(is.null(para1))para1 = 0
+      if(is.null(para2))para2 = 1
+      x=qnorm(copula[,i], mean = para1, sd = para2)
+    }
+    if(distr=='lnorm'){
+      if(is.null(para1))para1 = 0
+      if(is.null(para2))para2 = 1
+      x=exp(qnorm(copula[,i], mean = para1, sd = para2))
+    }
+    if(distr=='exp'){
+      if(is.null(para1))para1 = 1
+      x=qexp(copula[,i], rate = para1) 
+    }
+    if(distr=='pois'){
+      if(is.null(para1))para1 = 10
+      x=qpois(copula[,i], lambda = para1) 
+    }
+    if(distr=='gamma'){
+      if(is.null(para1))para1 = 1
+      if(is.null(para2))para2 = 2
+      x= qgamma(copula[,i], shape = para1, rate = para2) 
+    }
+    if(distr=='nbinom'){
+      if(is.null(para1))para1 = 20
+      if(is.null(para2))para2 = 0.3
+      x=qnbinom(copula[,i], mu = para1, size = para2) 
+    }
+    if(distr=='cauchy'){
+      if(is.null(para1))para1 = 0
+      if(is.null(para2))para2 = 1
+      x=qcauchy(copula[,i], location = para1, scale = para2)
+    }
+    return(x)
+  }
+  
+  data = c()
+  for(i in 1:n){
+    data = cbind(data,single(i))
+  }
+  
+  # cl <- makeCluster(10)
+  # registerDoSNOW(cl)
+  # 
+  # pb <- progress_bar$new(
+  #   format = "progress = :letter [:bar] :elapsed | eta: :eta", total = n, width = 60)
+  # 
+  # progress <- function(k){
+  #   pb$tick(tokens = list(letter = rep("", n)[k]))
+  # } 
+  # opts <- list(progress = progress)
+  # print('haha')
+  # data <- foreach(i = 1:n, .combine = cbind, .options.snow = opts) %dopar% {
+  #   return(single(i))
+  # }
+  # stopCluster(cl) 
+  return(data)
+}
+
+
+sim_mix<-function(distrlist=c('norm'), n=100, d = 2, prob = c(0.5, 0.5), corrlist = list(), para1list = list(), para2list = list()){
+  if(sum(prob)!=1)cat("warning: the mixture probability does not sum to one!")
+  if(length(para1list)!=length(prob))cat('warning: the length of parameter list does not equal to the length of mixtures')
+  #group = rmultinom(n, 1, prob)
+  #groupnumber = rowSums(group)
+  groupnumber = floor(n*prob)
+  groupnumber[length(groupnumber)] = n-sum(groupnumber[1:(length(groupnumber)-1)])
+  data = c()
+  index = c()
+  for(k in 1:length(prob)){
+    para1 = para1list[[k]] # k of d
+    para2 = para2list[[k]] # k of d
+    corr = corrlist[[k]] # k of d*d
+    index = c(index, rep(k,groupnumber[k]))
+    data = cbind(data, sim_joint(Rho=corr, d=d, n=groupnumber[k], distr=distrlist[k], para1=para1, para2=para2))
+  }
+  return(list(data, index))# d*n
+}
+
+
+
+#' Linear Simulation
+#'
+#' A function for Generating a linear simulation.
+#'
+#' @importFrom stats rnorm
+#'
+#' @param n the number of samples for the simulation.
+#' @param d the number of dimensions for the simulation setting.
+#' @param eps the noise level for the simulation. Defaults to \code{1}.
+#' @param ind whether to sample x and y independently. Defaults to \code{FALSE}.
+#' @param a the lower limit for the range of the data matrix. Defaults to \code{-1}.
+#' @param b the upper limit for the range  of the data matrix. Defaults to \code{1}.
+#' @return a list containing the following:
+#' \item{\code{X}}{\code{[n, d]} the data matrix with \code{n} samples in \code{d} dimensions.}
+#' \item{\code{Y}}{\code{[n]} the response array.}
+#'
+#' @section Details:
+#' Given: \eqn{w_i = \frac{1}{i}}{w[i] = 1/i} is a weight-vector that scales with the dimensionality.
+#' Simulates \eqn{n} points from \eqn{Linear(X, Y) \in  \mathbf{R}^d \times \mathbf{R}}{Linear(X, Y)}, where:
+#' \deqn{X \sim {U}(a, b)^d}{X ~ U(a, b)^d}
+#' \deqn{Y = w^TX + \kappa \epsilon}{Y = w^T X + \kappa \epsilon}
+#' and \eqn{\kappa = 1\textrm{ if }d = 1, \textrm{ and 0 otherwise}}{K = 1 if d=1, and 0 otherwise} controls the noise for higher dimensions.
+#'
+#' @examples
+#' library(mgc)
+#' result  <- mgc.sims.linear(n=100, d=10)  # simulate 100 samples in 10 dimensions
+#' X <- result$X; Y <- result$Y
+#' @author Eric Bridgeford
 #' @export
-sim_linear <- function(n, d, eps=1, ind=FALSE, a=-1, b=1) {
+mgc.sims.linear <- function(n, d, eps=1, ind=FALSE, a=-1, b=1) {
   xs <- gen.x.unif(n, d, a=a, b=b)
   w <- gen.coefs(d)
   nu <- rnorm(n, mean=0, sd=1)  # gaussian noise
@@ -238,8 +446,36 @@ sim_linear <- function(n, d, eps=1, ind=FALSE, a=-1, b=1) {
   return(list(X=xs, Y=ys))
 }
 
+#' Exponential Simulation
+#'
+#' A function for Generating an exponential simulation.
+#'
+#' @importFrom stats rnorm
+#'
+#' @param n the number of samples for the simulation.
+#' @param d the number of dimensions for the simulation setting.
+#' @param eps the noise level for the simulation. Defaults to \code{10}.
+#' @param ind whether to sample x and y independently. Defaults to \code{FALSE}.
+#' @param a the lower limit for the range of the data matrix. Defaults to \code{0}.
+#' @param b the upper limit for the range  of the data matrix. Defaults to \code{3}.
+#' @return a list containing the following:
+#' \item{\code{X}}{\code{[n, d]} the data matrix with \code{n} samples in \code{d} dimensions.}
+#' \item{\code{Y}}{\code{[n]} the response array.}
+#'
+#' @section Details:
+#' Given: \eqn{w_i = \frac{1}{i}}{w[i] = 1/i} is a weight-vector that scales with the dimensionality.
+#' Simulates \eqn{n} points from \eqn{Linear(X, Y) \in  \mathbf{R}^d \times \mathbf{R}}{Linear(X, Y)}, where:
+#' \deqn{X \sim {U}(a, b)^d}{X ~ U(a, b)^d}
+#' \deqn{Y = e^{w^TX} + \kappa \epsilon}{Y = exp(w^T X) + \kappa \epsilon}
+#' and \eqn{\kappa = 1\textrm{ if }d = 1, \textrm{ and 0 otherwise}}{K = 1 if d=1, and 0 otherwise} controls the noise for higher dimensions.
+#'
+#' @examples
+#' library(mgc)
+#' result  <- mgc.sims.exp(n=100, d=10)  # simulate 100 samples in 10 dimensions
+#' X <- result$X; Y <- result$Y
+#' @author Eric Bridgeford
 #' @export
-sim_exp <- function(n, d, eps=10, ind=FALSE, a=0, b=3) {
+mgc.sims.exp <- function(n, d, eps=10, ind=FALSE, a=0, b=3) {
   xs <- gen.x.unif(n, d, a=a, b=b)
   w <- gen.coefs(d)
   nu <- rnorm(n, mean=0, sd=1)  # gaussian noise
@@ -250,8 +486,39 @@ sim_exp <- function(n, d, eps=10, ind=FALSE, a=0, b=3) {
   }
   return(list(X=xs, Y=ys))
 }
+
+#' Cubic Simulation
+#'
+#' A function for Generating a cubic simulation.
+#'
+#' @importFrom stats rnorm
+#'
+#' @param n the number of samples for the simulation.
+#' @param d the number of dimensions for the simulation setting.
+#' @param eps the noise level for the simulation. Defaults to \code{80}.
+#' @param ind whether to sample x and y independently. Defaults to \code{FALSE}.
+#' @param a the lower limit for the range of the data matrix. Defaults to \code{-1}.
+#' @param b the upper limit for the range  of the data matrix. Defaults to \code{1}.
+#' @param c.coef the coefficients for the cubic function, where the first value is the first order coefficient, the second value the quadratic coefficient, and the third the cubic coefficient. Defaults to \code{c(-12, 48, 128)}.
+#' @param s the scaling for the center of the cubic. Defaults to \code{1/3}.
+#' @return a list containing the following:
+#' \item{\code{X}}{\code{[n, d]} the data matrix with \code{n} samples in \code{d} dimensions.}
+#' \item{\code{Y}}{\code{[n]} the response array.}
+#'
+#' @section Details:
+#' Given: \eqn{w_i = \frac{1}{i}}{w[i] = 1/i} is a weight-vector that scales with the dimensionality.
+#' Simulates \eqn{n} points from \eqn{Linear(X, Y) \in  \mathbf{R}^d \times \mathbf{R}}{Linear(X, Y)}, where:
+#' \deqn{X \sim {U}(a, b)^d}{X ~ U(a, b)^d}
+#' \deqn{Y = c_3\left(w^TX - s\right)^3 + c_2\left(w^TX - s\right)^2 + c_1\left(w^TX - s\right) + \kappa \epsilon}{Y = c[3](w^TX - s)^3 + c[2](w^TX - s)^2 + c[1](w^TX - s) + \kappa \epsilon}
+#' and \eqn{\kappa = 1\textrm{ if }d = 1, \textrm{ and 0 otherwise}}{K = 1 if d=1, and 0 otherwise} controls the noise for higher dimensions.
+#'
+#' @examples
+#' library(mgc)
+#' result  <- mgc.sims.cubic(n=100, d=10)  # simulate 100 samples in 10 dimensions
+#' X <- result$X; Y <- result$Y
+#' @author Eric Bridgeford
 #' @export
-sim_cubic <- function(n, d, eps=80, ind=FALSE, a=-1, b=1, c.coef=c(-12, 48, 128), s=1/3) {
+mgc.sims.cubic <- function(n, d, eps=80, ind=FALSE, a=-1, b=1, c.coef=c(-12, 48, 128), s=1/3) {
   xs <- gen.x.unif(n, d, a=a, b=b)
   w <- gen.coefs(d)
   nu <- rnorm(n, mean=0, sd=1)  # gaussian noise
@@ -263,8 +530,83 @@ sim_cubic <- function(n, d, eps=80, ind=FALSE, a=-1, b=1, c.coef=c(-12, 48, 128)
   }
   return(list(X=xs, Y=ys))
 }
+
+#' Joint Normal Simulation
+#'
+#' A function for Generating a joint-normal simulation.
+#'
+#' @importFrom MASS mvrnorm
+#' @importFrom stats rnorm
+#'
+#' @param n the number of samples for the simulation.
+#' @param d the number of dimensions for the simulation setting.
+#' @param eps the noise level for the simulation. Defaults to \code{0.5}.
+#' @return a list containing the following:
+#' \item{\code{X}}{\code{[n, d]} the data matrix with \code{n} samples in \code{d} dimensions.}
+#' \item{\code{Y}}{\code{[n]} the response array.}
+#'
+#' @section Details:
+#' Given: \eqn{\rho = \frac{1}{2}d}{r = 1/2*d}, \eqn{I_d}{Id} is the identity matrix of size \eqn{d \times d}{dxd}, \eqn{J_d}{Jd} is the matrix of ones of size \eqn{d \times d}{dxd}.
+#' Simulates \eqn{n} points from \eqn{Joint-Normal(X, Y) \in  \mathbf{R}^d \times \mathbf{R}^d}{Joint-Normal(X, Y)}, where:
+#' \deqn{(X, Y) \sim {N}(0, \Sigma)}{(X, Y) ~ N(0, E)},
+#' \deqn{\Sigma = \left[I_d, \rho J_d; \rho J_d , (1 + \epsilon\kappa)I_d\right]}{E = [Id, r*Jd; r*Jd, (1+eps*K)*Id]}
+#' and \eqn{\kappa = 1\textrm{ if }d = 1, \textrm{ and 0 otherwise}}{K = 1 if d=1, and 0 otherwise} controls the noise for higher dimensions.
+#'
+#' For more details see the help vignette:
+#' \code{vignette("sims", package = "mgc")}
+#'
+#' @examples
+#' library(mgc)
+#' result  <- mgc.sims.joint(n=100, d=10)  # simulate 100 samples in 10 dimensions
+#' X <- result$X; Y <- result$Y
+#' @author Eric Bridgeford
 #' @export
-sim_step <- function(n, d, eps=1, ind=FALSE, a=-1, b=1) {
+mgc.sims.joint <- function(n, d, eps=0.5) {
+  nu <- rnorm(n, mean=0, sd=1)  # gaussian noise
+  kappa <- as.numeric(d == 1)
+  rho = 1/(2*d)
+  Sig <- diag(2*d)
+  Sig[(d+1):(2*d), (1:d)] = rho
+  Sig[(1:d), (d+1):(2*d)] = rho
+  samp = mvrnorm(n=n, mu=array(0, dim=c(2*d, 1)), Sigma=Sig)
+  y = samp[, (d+1):(2*d), drop=FALSE] + kappa*eps*nu
+  x = samp[, 1:d, drop=FALSE]
+  return(list(X=x, Y=y))
+}
+
+#' Step Function Simulation
+#'
+#' A function for Generating a step function simulation.
+#'
+#' @importFrom stats rnorm
+#'
+#' @param n the number of samples for the simulation.
+#' @param d the number of dimensions for the simulation setting.
+#' @param eps the noise level for the simulation. Defaults to \code{1}.
+#' @param ind whether to sample x and y independently. Defaults to \code{FALSE}.
+#' @param a the lower limit for the data matrix. Defaults to \code{-1}.
+#' @param b the upper limit for the data matrix. Defaults to \code{-1}.
+#' @return a list containing the following:
+#' \item{\code{X}}{\code{[n, d]} the data matrix with \code{n} samples in \code{d} dimensions.}
+#' \item{\code{Y}}{\code{[n]} the response array.}
+#'
+#' @section Details:
+#' Given: \eqn{w_i = \frac{1}{i}}{w[i] = 1/i} is a weight-vector that scales with the dimensionality.
+#' Simulates \eqn{n} points from \eqn{Step(X, Y) \in \mathbf{R}^d\times \mathbf{R}}{Step-Function(X, Y)} where:
+#' \deqn{X \sim {U}\left(a, b\right)^d}{X ~ U(a, b)^d},
+#' \deqn{Y = \mathbf{I}\left\{w^TX > 0\right\} + \kappa \epsilon N(0, 1)}{Y = I{w^TX > 0} + K*eps*N(0, 1)}
+#' and \eqn{\kappa = 1\textrm{ if }d = 1, \textrm{ and 0 otherwise}}{K = 1 if d=1, and 0 otherwise} controls the noise for higher dimensions.
+#'
+#' For more details see the help vignette:
+#' \code{vignette("sims", package = "mgc")}
+#'
+#' @examples
+#' library(mgc)
+#' result  <- mgc.sims.step(n=100, d=10)  # simulate 100 samples in 10 dimensions
+#' X <- result$X; Y <- result$Y
+#' @author Eric Bridgeford
+#' @export
+mgc.sims.step <- function(n, d, eps=1, ind=FALSE, a=-1, b=1) {
   xs <- gen.x.unif(n, d, a=a, b=b)
   w <- gen.coefs(d)
   nu <- rnorm(n, mean=0, sd=1)  # gaussian noise
@@ -276,8 +618,39 @@ sim_step <- function(n, d, eps=1, ind=FALSE, a=-1, b=1) {
   return(list(X=xs, Y=y))
 }
 
+#' Quadratic Simulation
+#'
+#' A function for Generating a quadratic simulation.
+#'
+#' @importFrom stats rnorm
+#'
+#' @param n the number of samples for the simulation.
+#' @param d the number of dimensions for the simulation setting.
+#' @param eps the noise level for the simulation. Defaults to \code{0.5}.
+#' @param ind whether to sample x and y independently. Defaults to \code{FALSE}.
+#' @param a the lower limit for the data matrix. Defaults to \code{-1}.
+#' @param b the upper limit for the data matrix. Defaults to \code{1}.
+#' @return a list containing the following:
+#' \item{\code{X}}{\code{[n, d]} the data matrix with \code{n} samples in \code{d} dimensions.}
+#' \item{\code{Y}}{\code{[n]} the response array.}
+#'
+#' @section Details:
+#' Given: \eqn{w_i = \frac{1}{i}}{w[i] = 1/i} is a weight-vector that scales with the dimensionality.
+#' Simulates \code{n} points from \eqn{Quadratic(X, Y) \in \mathbf{R}^d \times \mathbf{R}}{Quadratic(X, Y)} where:
+#' \deqn{X \sim {U}(a, b)^d}{X ~ U(a, b)^d},
+#' \deqn{Y = (w^TX)^2 + \kappa\epsilon N(0, 1)}{Y = (w^TX)^2 + K*eps*N(0, 1)}
+#' and \eqn{\kappa = 1\textrm{ if }d = 1, \textrm{ and 0 otherwise}}{K = 1 if d=1, and 0 otherwise} controls the noise for higher dimensions.
+#'
+#' For more details see the help vignette:
+#' \code{vignette("sims", package = "mgc")}
+#'
+#' @examples
+#' library(mgc)
+#' result  <- mgc.sims.quad(n=100, d=10)  # simulate 100 samples in 10 dimensions
+#' X <- result$X; Y <- result$Y
+#' @author Eric Bridgeford
 #' @export
-sim_quad <- function(n, d, eps=0.5, ind=FALSE, a=-1, b=1) {
+mgc.sims.quad <- function(n, d, eps=0.5, ind=FALSE, a=-1, b=1) {
   xs <- gen.x.unif(n, d, a=a, b=b)
   w <- gen.coefs(d)
   nu <- rnorm(n, mean=0, sd=1)  # gaussian noise
@@ -288,8 +661,8 @@ sim_quad <- function(n, d, eps=0.5, ind=FALSE, a=-1, b=1) {
   }
   return(list(X=xs, Y=y))
 }
-#' @export
-sim_2parab <- function(n, d, eps=0.5, a=-1, b=1,prob=0.5) {
+
+mgc.sims.2parab <- function(n, d, eps=0.5, a=-1, b=1,prob=0.5) {
   xs <- gen.x.unif(n, d, a=a, b=b)
   w <- gen.coefs(d)
   u = array(rbinom(n*d,1,prob), dim=c(n,1))
@@ -301,8 +674,8 @@ sim_2parab <- function(n, d, eps=0.5, a=-1, b=1,prob=0.5) {
   }
   return(list(X=xs, Y=y))
 }
-#' @export
-sim_4root <- function(n, d, eps=0.5, ind=FALSE, a=-1, b=1) {
+
+mgc.sims.4root <- function(n, d, eps=0.5, ind=FALSE, a=-1, b=1) {
   xs <- gen.x.unif(n, d, a=a, b=b)
   w <- gen.coefs(d)
   nu <- rnorm(n, mean=0, sd=1)  # gaussian noise
@@ -313,8 +686,8 @@ sim_4root <- function(n, d, eps=0.5, ind=FALSE, a=-1, b=1) {
   }
   return(list(X=xs, Y=y))
 }
-#' @export
-sim_sine <- function(n, d, period = 1, eps=0.5, ind=FALSE, a=-1, b=1) {
+
+mgc.sims.sine <- function(n, d, period = 1, eps=0.5, ind=FALSE, a=-1, b=1) {
   xs <- gen.x.unif(n, d, a=a, b=b)
   w <- gen.coefs(d)
   nu <- rnorm(n, mean=0, sd=1)  # gaussian noise
@@ -326,8 +699,8 @@ sim_sine <- function(n, d, period = 1, eps=0.5, ind=FALSE, a=-1, b=1) {
   return(list(X=xs, Y=y))
 }
 
-#' @export
-sim_log <- function(n, d, pirod = 1, eps=0.5, ind=FALSE, a=-1, b=1) {
+
+mgc.sims.log <- function(n, d, pirod = 1, eps=0.5, ind=FALSE, a=-1, b=1) {
   xs <- gen.x.unif(n, d, a=a, b=b)
   w <- gen.coefs(d)
   nu <- rnorm(n, mean=0, sd=1)  # gaussian noise
@@ -340,7 +713,42 @@ sim_log <- function(n, d, pirod = 1, eps=0.5, ind=FALSE, a=-1, b=1) {
 }
 
 
-sim_wshape <- function(n, d, eps=0.5, ind=FALSE, a=-1, b=1) {
+
+
+#' W Shaped Simulation
+#'
+#' A function for Generating a W-shaped simulation.
+#'
+#' @importFrom stats rnorm
+#'
+#' @param n the number of samples for the simulation.
+#' @param d the number of dimensions for the simulation setting.
+#' @param eps the noise level for the simulation. Defaults to \code{0.5}.
+#' @param ind whether to sample x and y independently. Defaults to \code{FALSE}.
+#' @param a the lower limit for the data matrix. Defaults \code{-1}.
+#' @param b the upper limit for the data matrix. Defaults to \code{1}.
+#' @return a list containing the following:
+#' \item{\code{X}}{\code{[n, d]} the data matrix with \code{n} samples in \code{d} dimensions.}
+#' \item{\code{Y}}{\code{[n]} the response array.}
+#'
+#' @section Details:
+#' Given: \eqn{w_i = \frac{1}{i}}{w[i] = 1/i} is a weight-vector that scales with the dimensionality.
+#' Simumlates \eqn{n} points from \eqn{W-shape(X, Y) \in \mathbf{R}^d \times \mathbf{R}}{W-shape(X, Y)} where:
+#' \deqn{U \sim {U}(a, b)^d}{U ~ U(a, b)^d},
+#' \deqn{X \sim {U}(a, b)^d}{X ~ U(a, b)^d},
+#' \deqn{Y = \left[\left((w^TX)^2 - \frac{1}{2}\right)^2 + \frac{w^TU}{500}\right] + \kappa \epsilon N(0, 1)}{Y = [((w^TX)^2 - 1/2)^2 + w^TU/500] + K*eps*N(0, 1)}
+#' and \eqn{\kappa = 1\textrm{ if }d = 1, \textrm{ and 0 otherwise}}{K = 1 if d=1, and 0 otherwise} controls the noise for higher dimensions.
+#'
+#' For more details see the help vignette:
+#' \code{vignette("sims", package = "mgc")}
+#'
+#' @examples
+#' library(mgc)
+#' result  <- mgc.sims.wshape(n=100, d=10)  # simulate 100 samples in 10 dimensions
+#' X <- result$X; Y <- result$Y
+#' @author Eric Bridgeford
+#' @export
+mgc.sims.wshape <- function(n, d, eps=0.5, ind=FALSE, a=-1, b=1) {
   x <- gen.x.unif(n, d, a=a, b=b)
   u <- gen.x.unif(n, d, a=a, b=b)
   w <- gen.coefs(d)
@@ -354,8 +762,37 @@ sim_wshape <- function(n, d, eps=0.5, ind=FALSE, a=-1, b=1) {
   return(list(X=x, Y=y))
 }
 
-
-sim_spiral <- function(n, d, eps=0.4, a=0, b=5) {
+#' Spiral Simulation
+#'
+#' A function for Generating a spiral simulation.
+#'
+#' @importFrom stats rnorm
+#'
+#' @param n the number of samples for the simulation.
+#' @param d the number of dimensions for the simulation setting.
+#' @param eps the noise level for the simulation. Defaults to \code{0.5}.
+#' @param a the lower limit for the data matrix. Defaults \code{-1}.
+#' @param b the upper limit for the data matrix. Defaults to \code{1}.
+#' @return a list containing the following:
+#' \item{\code{X}}{\code{[n, d]} the data matrix with \code{n} samples in \code{d} dimensions.}
+#' \item{\code{Y}}{\code{[n]} the response array.}
+#'
+#' @section Details:
+#' Given: \eqn{U \sim U(a, b)}{U ~ U(a, b)} a random variable.
+#' Simumlates \eqn{n} points from \eqn{Spiral(X, Y) \in \mathbf{R}^d \times \mathbf{R}}{Spiral(X, Y)} where:
+#' \eqn{X_i = U\, \textrm{cos}(\pi\, U)^d}{Xi = U*cos(pi*U)^d} if \code{i = d}, and \eqn{U\, \textrm{sin}(\pi U)\textrm{cos}^i(\pi U)}{sin(pi*U)*cos(pi*U)^i} otherwise
+#' \deqn{Y = U\, \textrm{sin}(\pi\, U) + \epsilon p N(0, 1)}{Y = U*sin(pi*U) + eps*p*N(0, 1)}
+#'
+#' For more details see the help vignette:
+#' \code{vignette("sims", package = "mgc")}
+#'
+#' @examples
+#' library(mgc)
+#' result  <- mgc.sims.spiral(n=100, d=10)  # simulate 100 samples in 10 dimensions
+#' X <- result$X; Y <- result$Y
+#' @author Eric Bridgeford
+#' @export
+mgc.sims.spiral <- function(n, d, eps=0.4, a=0, b=5) {
   u <- gen.x.unif(n, 1, a=a, b=b)
   x <- array(cos(pi*u), dim=c(n, d))
   y <- u*sin(pi*u)
@@ -370,7 +807,7 @@ sim_spiral <- function(n, d, eps=0.4, a=0, b=5) {
   return(list(X=x, Y=y))
 }
 
-sim_circle <- function(n, d, eps=0.05, a=-1, b=1, r=1) {
+mgc.sims.circle <- function(n, d, eps=0.05, a=-1, b=1, r=1) {
   u <- gen.x.unif(n, 1, a=a, b=b)
   x <- r*cos(u[,1]*pi)
   y <- sin(u[,1]*pi)
@@ -379,7 +816,7 @@ sim_circle <- function(n, d, eps=0.05, a=-1, b=1, r=1) {
   return(list(X=x, Y=y))
 }
 
-sim_ellipse <- function(n, d, eps=0.05, a=-1, b=1, r=5) {
+mgc.sims.ellipse <- function(n, d, eps=0.05, a=-1, b=1, r=5) {
   u <- gen.x.unif(n, 1, a=a, b=b)
   x <- r*cos(u[,1]*pi)
   y <- sin(u[,1]*pi)
@@ -389,25 +826,57 @@ sim_ellipse <- function(n, d, eps=0.05, a=-1, b=1, r=5) {
 }
 
 
-sim_diamond <- function(n, d, eps=0.05, a=-1, b=1, period=-pi/4) {
+mgc.sims.diamond <- function(n, d, eps=0.05, a=-1, b=1, period=-pi/4) {
   u <- gen.x.unif(n, 2, a=a, b=b)
-  x <- u[,1]*cos(period) + u[,2]*sin(period)
-  y <- -u[,1]*sin(period) + u[,2]*cos(period)
+  x <- u[,1]*cos(period) + u[,2]*sin(period) 
+  y <- -u[,1]*sin(period) + u[,2]*cos(period) 
   nu <- rnorm(n, mean=0, sd=1)  # gaussian noise
   y <- y + eps*d*nu
   return(list(X=x, Y=y))
 }
 
-sim_square <- function(n, d, eps=0.05, a=-1, b=1, period=-pi/8) {
+mgc.sims.square <- function(n, d, eps=0.05, a=-1, b=1, period=-pi/8) {
   u <- gen.x.unif(n, 2, a=a, b=b)
-  x <- u[,1]*cos(period) + u[,2]*sin(period)
-  y <- -u[,1]*sin(period) + u[,2]*cos(period)
+  x <- u[,1]*cos(period) + u[,2]*sin(period) 
+  y <- -u[,1]*sin(period) + u[,2]*cos(period) 
   nu <- rnorm(n, mean=0, sd=1)  # gaussian noise
   y <- y + eps*d*nu
   return(list(X=x, Y=y))
 }
 
-sim_ubern <- function(n, d, eps=0.5, p=0.5) {
+
+#' Uncorrelated Bernoulli Simulation
+#'
+#' A function for Generating an uncorrelated bernoulli simulation.
+#'
+#' @importFrom stats rnorm rbinom
+#' @importFrom MASS mvrnorm
+#'
+#' @importFrom MASS mvrnorm
+#' @param n the number of samples for the simulation.
+#' @param d the number of dimensions for the simulation setting.
+#' @param eps the noise level for the simulation. Defaults to \code{0.5}.
+#' @param p the bernoulli probability.
+#' @return a list containing the following:
+#' \item{\code{X}}{\code{[n, d]} the data matrix with \code{n} samples in \code{d} dimensions.}
+#' \item{\code{Y}}{\code{[n]} the response array.}
+#'
+#' @section Details:
+#' Given: \eqn{w_i = \frac{1}{i}}{w[i] = 1/i} is a weight-vector that scales with the dimensionality.
+#' Simumlates \eqn{n} points from \eqn{Wshape(X, Y) \in \mathbf{R}^d \times \mathbf{R}}{Wshape(X, Y)} where:
+#' \deqn{U \sim Bern(p)}{U ~ B(p)}
+#' \deqn{X \sim Bern\left(p\right)^d + \epsilon N(0, I_d)}{X ~ B(p)^d + eps*N(0, I_d)}
+#' \deqn{Y = (2U - 1)w^TX + \epsilon N(0, 1)}{Y = (2*U-1)w^T*X + 0.5*eps*N(0, 1)}
+#'
+#' \code{vignette("sims", package = "mgc")}
+#'
+#' @examples
+#' library(mgc)
+#' result  <- mgc.sims.ubern(n=100, d=10)  # simulate 100 samples in 10 dimensions
+#' X <- result$X; Y <- result$Y
+#' @author Eric Bridgeford
+#' @export
+mgc.sims.ubern <- function(n, d, eps=0.5, p=0.5) {
   U = rbinom(n=n, size=1, prob=p)
   nu_e1 <- mvrnorm(n=n, mu = array(0, dim=c(d, 1)), Sigma = diag(d))  # gaussian noise
   X = array(rbinom(n=d*n, size=1, prob=p), dim=c(n, d)) + eps*nu_e1
@@ -421,24 +890,268 @@ sim_ubern <- function(n, d, eps=0.5, p=0.5) {
 }
 
 
-sim_multi <- function(n, d) {
+mgc.sims.multi <- function(n, d) {
   X <- mvrnorm(n=n, mu = array(0, dim=c(d, 1)), Sigma = diag(d))  # gaussian noise
   Y <- mvrnorm(n=n, mu = array(0, dim=c(d, 1)), Sigma = diag(d))
   Y = X*Y
-
+  
   return(list(X=X, Y=Y))
 }
 
-sim_indep <- function(n, d, prob=0.5, sep1=1,sep2=2) {
+mgc.sims.indep <- function(n, d, prob=0.5, sep1=1,sep2=2) {
   X <- mvrnorm(n=n, mu = array(0, dim=c(d, 1)), Sigma = diag(d))  # gaussian noise
   Y <- mvrnorm(n=n, mu = array(0, dim=c(d, 1)), Sigma = diag(d))
   u = rbinom(n*d, 1, prob)
   v = rbinom(n*d, 1, prob)
   X = X/sep1 + sep2 * u -1
   Y = Y/sep1 + sep2 * v -1
+  
   return(list(X=X, Y=Y))
 }
 
+
+#' Discriminability Linear Simulation
+#'
+#' A function to simulate multi-class data with a linear class-mean trend. The signal dimension is the dimension carrying all of the
+#' between-class difference, and the non-signal dimensions are noise.
+#'
+#' @import abind
+#' @param n the number of samples.
+#' @param d the number of dimensions. The first dimension will be the signal dimension; the remainders noise.
+#' @param K the number of classes in the dataset.
+#' @param signal.scale the scaling for the signal dimension. Defaults to \code{1}.
+#' @param signal.lshift the location shift for the signal dimension between the classes. Defaults to \code{1}.
+#' @param non.scale the scaling for the non-signal dimensions. Defaults to \code{1}.
+#' @param rotate whether to apply a random rotation. Defaults to \code{TRUE}.
+#' @param class.equal whether the number of samples/class should be equal, with each
+#' class having a prior of 1/K, or inequal, in which each class obtains a prior
+#' of k/sum(K) for k=1:K. Defaults to \code{TRUE}.
+#' @param ind whether to sample x and y independently. Defaults to \code{FALSE}.
+#' @author Eric Bridgeford
+#' @export
+discr.sims.linear <- function(n, d, K, signal.scale=1, signal.lshift=1, non.scale=1, rotate=FALSE, class.equal=TRUE, ind=FALSE) {
+  priors <- gen.sample.labels(K, class.equal=class.equal)
+  S <- diag(d)
+  S[1, 1] <- signal.scale
+  S[-c(1), -c(1)] <- non.scale
+  S <- abind(lapply(1:K, function(i) {
+    S
+  }), along=3)
+  mu <- c(1, rep(0, d-1))
+  mu[1] <- signal.lshift
+  mus <- abind(lapply(1:K, function(i) {
+    mu*i*signal.lshift
+  }), along=2)
+  
+  if (rotate) {
+    res <- mgc.sims.random_rotate(mus, S)
+    mus <- res$mus
+    S <- res$S
+    rotate=res$Q
+  }
+  
+  sim <- mgc.sims.sim_gmm(mus, S, n, priors=priors)
+  X <- sim$X; Y <- factor(sim$Y)
+  return(list(X=X, Y=Y, mus=mus, Sigmas=S, priors=priors, simtype="Linear",
+              params=list(signal.scale=signal.scale, signal.lshift=signal.lshift, non.scale=non.scale,
+                          rotate=rotate, class.equal=class.equal, ind=ind)))
+}
+
+#' Discriminability Exponential Simulation
+#'
+#' A function to simulate multi-class data with an Exponential class-mean trend.
+#'
+#' @import abind
+#' @param n the number of samples.
+#' @param d the number of dimensions. The first dimension will be the signal dimension; the remainders noise.
+#' @param K the number of classes in the dataset.
+#' @param signal.scale the scaling for the signal dimension. Defaults to \code{1}.
+#' @param signal.lshift the location shift for the signal dimension between the classes. Defaults to \code{1}.
+#' @param non.scale the scaling for the non-signal dimensions. Defaults to \code{1}.
+#' @param rotate whether to apply a random rotation. Defaults to \code{TRUE}.
+#' @param class.equal whether the number of samples/class should be equal, with each
+#' class having a prior of 1/K, or inequal, in which each class obtains a prior
+#' of k/sum(K) for k=1:K. Defaults to \code{TRUE}.
+#' @param ind whether to sample x and y independently. Defaults to \code{FALSE}.
+#' @author Eric Bridgeford
+#' @export
+discr.sims.exp <- function(n, d, K, signal.scale=1, signal.lshift=1, non.scale=1, rotate=FALSE, class.equal=TRUE, ind=FALSE) {
+  priors <- gen.sample.labels(K, class.equal=class.equal)
+  S <- diag(d)
+  S[1, 1] <- signal.scale; S[-c(1), -c(1)] <- non.scale
+  S <- abind(lapply(1:K, function(i) {
+    S
+  }), along=3)
+  mu <- c(1, rep(0, d-1))
+  mu[1] <- signal.lshift
+  mus <- abind(lapply(1:K, function(i) {
+    mu*exp(i)*signal.lshift
+  }), along=2)
+  
+  if (rotate) {
+    res <- mgc.sims.random_rotate(mus, S)
+    mus <- res$mus
+    S <- res$S
+    rotate=res$Q
+  }
+  
+  sim <- mgc.sims.sim_gmm(mus, S, n, priors=priors)
+  X <- sim$X; Y <- factor(sim$Y)
+  return(list(X=X, Y=Y, mus=mus, Sigmas=S, priors=priors, simtype="Linear",
+              params=list(signal.scale=signal.scale, signal.lshift=signal.lshift,
+                          non.scale=non.scale, rotate=rotate, class.equal=class.equal,
+                          ind=ind)))
+}
+
+#' Discriminability Spread Simulation
+#'
+#' A function to simulate data with the same mean that spreads as class id increases.
+#'
+#' @import abind
+#' @param n the number of samples.
+#' @param d the number of dimensions.
+#' @param K the number of classes in the dataset.
+#' @param signal.scale the scaling for the signal dimension. Defaults to \code{1}.
+#' @param rotate whether to apply a random rotation. Defaults to \code{TRUE}.
+#' @param class.equal whether the number of samples/class should be equal, with each
+#' class having a prior of 1/K, or inequal, in which each class obtains a prior
+#' of k/sum(K) for k=1:K. Defaults to \code{TRUE}.
+#' @param ind whether to sample x and y independently. Defaults to \code{FALSE}.
+#' @examples
+#' library(mgc)
+#' sim <- discr.sims.fat_tails(100, 3, 2)
+#' @author Eric Bridgeford
+#' @export
+discr.sims.fat_tails <- function(n, d, K, signal.scale=1, rotate=FALSE, class.equal=TRUE, ind=FALSE) {
+  priors <- gen.sample.labels(K, class.equal=class.equal)
+  S <- signal.scale*diag(d)
+  S <- abind(lapply(1:K, function(i) {
+    i^2*S
+  }), along=3)
+  mus <- array(0, dim=c(d, K))
+  
+  if (rotate) {
+    res <- mgc.sims.random_rotate(mus, S)
+    mus <- res$mus
+    S <- res$S
+  }
+  
+  sim <- mgc.sims.sim_gmm(mus, S, n, priors=priors)
+  X <- sim$X; Y <- factor(sim$Y)
+  
+  if (ind) {
+    X <- mgc.sims.sim_gmm(mus, S, n, priors=priors)$X
+  }
+  
+  return(list(X=X, Y=Y, mus=mus, Sigmas=S, priors=priors, simtype="Fat Tails",
+              params=list(signal.scale=signal.scale, rotate=rotate, class.equal=class.equal,
+                          ind=ind)))
+}
+
+#' Discriminability Cross Simulation
+#'
+#' A function to simulate data with the same mean that spreads as class id increases.
+#'
+#' @import abind
+#' @param n the number of samples.
+#' @param d the number of dimensions.
+#' @param K the number of classes in the dataset.
+#' @param signal.scale the scaling for the signal dimension. Defaults to \code{10}.
+#' @param non.scale the scaling for the non-signal dimensions. Defaults to \code{1}.
+#' @param mean.scale whether the magnitude of the difference in the means between the two classes.
+#' If a mean scale is requested, \code{d} should be at least > \code{K}.
+#' @param rotate whether to apply a random rotation. Defaults to \code{TRUE}.
+#' @param class.equal whether the number of samples/class should be equal, with each
+#' class having a prior of 1/K, or inequal, in which each class obtains a prior
+#' of k/sum(K) for k=1:K. Defaults to \code{TRUE}.
+#' @param ind whether to sample x and y independently. Defaults to \code{FALSE}.
+#' @examples
+#' library(mgc)
+#' sim <- discr.sims.cross(100, 3, 2)
+#' @author Eric Bridgeford
+#' @export
+discr.sims.cross <- function(n, d, K, signal.scale=10, non.scale=1, mean.scale=0,
+                             rotate=FALSE, class.equal=TRUE, ind=FALSE) {
+  priors <- gen.sample.labels(K, class.equal=class.equal)
+  S <- diag(d)
+  S <- abind(lapply(1:K, function(i) {
+    S.class <- S
+    S.class[i,i] <- signal.scale
+    S.class[-c(i), -c(i)] <- non.scale
+    S.class
+  }), along=3)
+  mus <- array(0, dim=c(d, K))
+  if (mean.scale > 0) {
+    if (d < K) {
+      stop("If a mean scale is requested, d should be >= K.")
+    }
+    diag(mus) <- mean.scale
+  }
+  
+  if (rotate) {
+    res <- mgc.sims.random_rotate(mus, S)
+    mus <- res$mus
+    S <- res$S
+  }
+  
+  sim <- mgc.sims.sim_gmm(mus, S, n, priors=priors)
+  X <- sim$X; Y <- factor(sim$Y)
+  
+  if (ind) {
+    X <- mgc.sims.sim_gmm(mus, S, n, priors=priors)$X
+  }
+  
+  return(list(X=X, Y=Y, mus=mus, Sigmas=S, priors=priors, simtype="Logarithmic",
+              params=list(signal.scale=signal.scale, rotate=rotate, class.equal=class.equal,
+                          ind=ind)))
+}
+#' Discriminability Radial Simulation
+#'
+#' A function to simulate data with the same mean with radial symmetry as class id increases.
+#'
+#' @import abind
+#' @param n the number of samples.
+#' @param d the number of dimensions.
+#' @param K the number of classes in the dataset.
+#' @param er.scale the scaling for the error of the samples. Defaults to \code{0.1}.
+#' @param r the radial spacing between each class. Defaults to \code{1}.
+#' @param class.equal whether the number of samples/class should be equal, with each
+#' class having a prior of 1/K, or inequal, in which each class obtains a prior
+#' of k/sum(K) for k=1:K. Defaults to \code{TRUE}.
+#' @param ind whether to sample x and y independently. Defaults to \code{FALSE}.
+#' @examples
+#' library(mgc)
+#' sim <- discr.sims.radial(100, 3, 2)
+#' @author Eric Bridgeford
+#' @export
+discr.sims.radial <- function(n, d, K, er.scale=0.1, r=1, class.equal=TRUE, ind=FALSE) {
+  priors <- gen.sample.labels(K, class.equal=class.equal)
+  
+  class <- 1:K
+  # sample n points from 1:K for assignment of class label
+  Y <- sample(class, size=n, replace=TRUE, prob=priors)
+  # initialize X
+  X <- array(NaN, dim=c(n, d))
+  
+  # loop over class labels that we are sampling from
+  for (i in class[class %in% Y]) {
+    if (i == 1) {
+      f <- mgc.sims.2ball
+    } else {
+      f <- mgc.sims.2sphere
+    }
+    repvec <- Y == i
+    pts <- do.call(f, list(sum(repvec), d, r=r*i, cov.scale=er.scale))
+    X[repvec,] <- pts
+  }
+  
+  if (ind) {
+    Y <- sample(class, size=n, replace=TRUE, prob=priors)
+  }
+  return(list(X=X, Y=factor(Y), priors=priors, simtype="Radial",
+              params=list(er.scale=er.scale, r=r, class.equal=class.equal,
+                          ind=ind)))
+}
 
 #' A helper function for simulating sample labels
 #' @param K the number of classes
@@ -541,7 +1254,7 @@ mgc.sims.random_rotate <- function(mus, Sigmas, Q=NULL) {
   } else if (!isTRUE(all.equal(dim(Q), c(d, d)))) {
     stop(sprintf("You have specified a rotation matrix with dimensions (%d, %d), but should be (%d, %d).", dim(Q)[1], dim(Q)[2], d, d))
   }
-
+  
   for (i in 1:K) {
     mus[,i] <- Q %*% mus[,i,drop=FALSE]
     Sigmas[,,i] <- Q %*% Sigmas[,,i] %*% t(Q)

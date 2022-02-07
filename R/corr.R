@@ -11,16 +11,16 @@
 #'            sx = list(rank = vector of value rank, dist = matrix of pairwise distance)
 #' @param sy: similar as the definition for sx, but for vector y
 #' @param methods: a vector of strings, should be set of the following:
-#'            -- 'pearson': Pearaon's correlation
-#'            -- 'spearman': Spearman's correaltion
-#'            -- 'kendall': Kendall's \eqn{\tau}
-#'            -- 'taustar': Kendall's \eqn{\tau^\star}
-#'            -- 'dcor': distance correlation
-#'            -- 'hsic': Hilbert-Schmidt Independence Criterion (normalized to 0,1)
-#'            -- 'hoeffd': Hoeffding's D
-#'            -- 'hhg': HHG
-#'            -- 'rank': Matching Ranks
-#'            -- 'mic': Maximal Information Coefficient
+#'            -- 'Pearson': Pearaon's correlation
+#'            -- 'Spearman': Spearman's correaltion
+#'            -- 'Kendall': Kendall's \eqn{\tau}
+#'            -- 'TauStar': Kendall's \eqn{\tau^\star}
+#'            -- 'dCor': distance correlation
+#'            -- 'HSIC': Hilbert-Schmidt Independence Criterion (normalized to 0,1)
+#'            -- 'HoeffD': Hoeffding's D
+#'            -- 'HHG': HHG
+#'            -- 'MRank': Matching Ranks
+#'            -- 'MIC': Maximal Information Coefficient
 #'            -- 'aLDG': averaged Local Density Gap
 #' @param all: logical value, if true then compute for all methods listed
 #'
@@ -40,8 +40,9 @@
 #' @return a vector
 #' @examples
 #' # Load example data
-#' ans = bidep(runif(10),runif(10),methods='aldg')
+#' ans = bidep(runif(10),runif(10),methods='aLDG')
 #' @rdname bidep
+#' @import TauStar, minerva, dHSIC, energy, HHG, Hmisc
 #' @export
 bidep<-function(x, y, sx = NULL, sy = NULL, methods=NULL, all = FALSE,
                       thred=-Inf, hx=NULL, hy=NULL, band = 'fix',
@@ -55,98 +56,50 @@ bidep<-function(x, y, sx = NULL, sy = NULL, methods=NULL, all = FALSE,
   corr = c()
   n = length(x)
 
-  if(thred > -Inf){
-    id = c()
-    idx = which(x>thred)
-    idy = which(y>thred)
-    id = intersect(idx,idy)
-  }else{
-    id = 1:n
-  }
-
-  if(all)methods = c('pearson','spearman','kendall','taustar','dcor','hsic','hoeffd','hhg','mic','rank','aldg')
+  if(all)methods = c('Pearson','Spearman','Kendall','TauStar','dCor','HSIC','HoeffD','HHG','MIC','MRank','aLDG')
 
   for(method in methods){
-    if(method %in% c('pearson','spearman','kendall')){
-      corr[method] = cor(x, y, method = method)
+    if(method %in% c('Pearson','Spearman','Kendall')){
+      corr[method] = cor(x, y, method = tolower(method))
     }
-    if(method=='taustar'){
+    if(method=='TauStar'){
       a= tStar(x, y)
       # theoretically, taustar lies in range [-1/3,2/3], where 0 represents independence,
       # therefore we do the following to rescale it to [-1,1] with 0 still represents independence
-      if(a<=0)corr['taustar']=a*3
-      if(a>0)corr['taustar']=a*3/2
+      if(a<=0)corr[method]=a*3
+      if(a>0)corr[method]=a*3/2
     }
-    if(method=='dcor'){
+    if(method=='dCor'){
       corr[method] = dcor(x,y)
     }
-    if(method=='hsic'){
+    if(method=='HSIC'){
       # we normalize in this way such that HSIC is in [0,1]
-      corr['hsic'] = dhsic(x,y)$dHSIC/sqrt(dhsic(x,x)$dHSIC * dhsic(y,y)$dHSIC)
+      corr[method] = dhsic(x,y)$dHSIC/sqrt(dhsic(x,x)$dHSIC * dhsic(y,y)$dHSIC)
     }
-    if(method=='hoeffd'){
-      corr['hoeffd']= hoeffd(x,y)$D[1,2]
+    if(method=='HoeffD'){
+      corr[method]= hoeffd(x,y)$D[1,2]
     }
-    if(method=='hhg'){
+    if(method=='HHG'){
       result = hhg.univariate.ind.stat(x, y)$statistic
-      corr['hhg'] = result[length(result)]
+      corr[method] = result[length(result)]
     }
-    if(method=='mic'){
-      corr['mic']=mine(x, y)$MIC
+    if(method=='MIC'){
+      corr[method]=mine(x, y)$MIC
     }
-    if(method=='rank'){
-      corr['rank']=incSubseq(x,y,k=5)/choose(n,5)
+    if(method=='MRank'){
+      corr[method]=incSubseq(x,y,k=5)/choose(n,5)
     }
-    if(method=='aldg'){
-      nt = length(id)
-      if(nt>10){
-        xt = x[id]
-        yt = y[id]
-        rid = ((n-nt)+1):n
-        result = rep(0,n)
-        if(!is.null(sx)&&!is.null(sy)){
-          rx = sx[['rank']]
-          rx = rx[which(rx %in% rid)]-(n-nt)
-          ry = sy[['rank']]
-          ry = ry[which(ry %in% rid)]-(n-nt)
-          re = ldgsingle(xt, yt, NULL,
-                         rx=rx,
-                         ry=ry,
-                         dx=sx[['dist']][rid,rid],
-                         dy=sy[['dist']][rid,rid],
-                         hx=hx, hy=hy,
-                         wd=wd, kernel = 'box',
-                         bandlist = c(band),
-                         chooset = FALSE,
-                         stat = stat, opt=opt)
-        }
-        else{
-          re = ldgsingle(xt, yt, NULL,
-                         hx=hx, hy=hy,
-                         wd=wd, kernel = 'box',
-                         bandlist = c(band),
-                         chooset = FALSE,
-                         stat = stat,opt=opt)
-        }
-        if(!is.null(re[[2]]))t = re[[2]]
-        else{
-          if(stat=='normgap'){
-            t = qnorm(1-1/(nt)^cutoff)/nt^(1/3)
-          }
-          if(stat=='probnormgap'){
-            t =qnorm(1-1/(nt)^cutoff)
-          }
-        }
-        result[id] = re[[1]][[band]]
-        corr['aldg'] = mean(result>t)
-      }
-      else{
-        corr['aldg']=0
-      }
+    if(method=='aLDG'){
+      corr[method]=aldg(x, y, sx = sx, sy = sy,
+                        thred = thred, hx = hx, hy = hy, band = band,
+                        wd = wd, qd =qd, opt = opt, 
+                        stat = stat, cutoff = cutoff)$aldg
     }
   }
   return(corr)
 }
+
+
 
 
 #' Function to compute the pairwise dependency matrix for multivariate data
@@ -289,6 +242,108 @@ matdep<-function(data, methods=NULL, all = FALSE,
 
 
 #==== helper functions====#
+#' Function to compute the aLDG measure
+#'
+#' @param x: a numeric vector
+#' @param y: a numeric vector of the same length as x
+#' @param sx: a list containing the sorting information, defualt to NULL,
+#'            if not NULL, then should have the format
+#'            sx = list(rank = vector of value rank, dist = matrix of pairwise distance)
+#' @param sy: similar as the definition for sx, but for vector y
+#' @param thred: (aLDG specific parameters) only the data > thred will be used for aLDG
+#' @param hx,hy: (aLDG specific parameters) vector consist provided bandwidth for x (or y), default to NULL
+#' @param band: (aLDG specific parameters) which method to use for automatically calculating bandwidth (if hx and hy are NULL)
+#'              -- 'fix': the window around x is \eqn{B_x = (x-wd \cdot h_n, x + wd \cdot h_n}
+#'              -- 'ada': the adaptive window around x is \eqn{P(X \in B_x \mid Y=y) = qd}
+#' @param wd: (aLDG specific parameters) the coefficient before the bandwidth h = wd*h_n
+#' @param qd: (aLDG specific parameters) the quantile window to compute the adaptive bandwidth \eqn{h_x = sd(x(qd))}
+#' @param opt: (aLDG specific parameters) for 'fix' bandwidth calculation,
+#'             if TRUE, we use the theoretical optimal rate \eqn{h_n = sd(x) n^{-1/6};
+#'             if FALSE, we use \eqn{h_n = sd}
+#' @param stat: (aLDG specific parameters) what statistics to use for \eqn{T_i} in aLDG
+#' @param cutoff: (aLDG specific parameters) the coef c in threshold choice for aLDG:
+#'             \deqn{aLDG = \frac{1}{n} \sum_{i=1}^n ( T_i > \frac{\Phi^{-1}(1-n^{-c})}{n^{1/3}})}
+#' @return a vector
+#' @examples
+#' # Load example data
+#' ans = aldg(runif(10),runif(10))
+#' print(ans$aldg)
+#' @rdname aldg
+#' @export
+aldg<-function(x, y, sx = NULL, sy = NULL,
+               thred=-Inf, hx=NULL, hy=NULL, band = 'fix',
+               wd = 0.5, qd = 0.1, opt = TRUE, 
+               stat = 'normgap', cutoff = 1, 
+               chooset=NULL){
+  
+  n = length(x)
+  
+  if(thred > -Inf){
+    id = c()
+    idx = which(x>thred)
+    idy = which(y>thred)
+    id = intersect(idx,idy)
+  }else{
+    id = 1:n
+  }
+  
+  nt = length(id)
+  if(nt>10){
+    xt = x[id]
+    yt = y[id]
+    rid = ((n-nt)+1):n
+    result = rep(0,n)
+    if(!is.null(sx)&&!is.null(sy)){
+      rx = sx[['rank']]
+      rx = rx[which(rx %in% rid)]-(n-nt)
+      ry = sy[['rank']]
+      ry = ry[which(ry %in% rid)]-(n-nt)
+      re = ldgsingle(xt, yt, NULL,
+                     rx=rx,
+                     ry=ry,
+                     dx=sx[['dist']][rid,rid],
+                     dy=sy[['dist']][rid,rid],
+                     hx=hx, hy=hy,
+                     wd=wd, kernel = 'box',
+                     bandlist = c(band),
+                     chooset = FALSE,
+                     stat = stat, opt=opt)
+    }
+    else{
+      re = ldgsingle(xt, yt, NULL,
+                     hx=hx, hy=hy,
+                     wd=wd, kernel = 'box',
+                     bandlist = c(band),
+                     chooset = FALSE,
+                     stat = stat,opt=opt)
+    }
+    if(!is.null(re[[2]]))t = re[[2]]
+    else{
+      #if(stat=='normgap'){
+      #  t = qnorm(1-1/(nt)^cutoff)/nt^(1/3)
+      #}
+      #if(stat=='probnormgap'){
+      #  t =qnorm(1-1/(nt)^cutoff)
+      #}
+      Tvec = re[[1]][[band]]
+      sTvec = sort(Tvec)
+      sTvec = sTvec[which(sTvec>0)]
+      s1gapvec = sTvec[1:(length(sTvec)-2)]-sTvec[2:(length(sTvec)-1)]
+      s2gapvec = sTvec[2:(length(sTvec)-1)]-sTvec[3:(length(sTvec))]
+      sgapvec = s2gapvec-s1gapvec
+      nstar = which.max(sgapvec)
+      t = sTvec[nstar]
+    }
+    result[id] = re[[1]][[band]]
+    return(list(aldg=mean(result>t),Tvec = result))
+  }
+  else{
+    return(list(aldg =0, Tvec = NULL))
+  }
+}
+
+
+
 #' @export
 ldgsingle<-function(x,y, id = NULL,
                     dall = NULL, knn = 100, # the distance matrix of samples using all features

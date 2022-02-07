@@ -38,132 +38,45 @@ pairperm<-function(n=300, alpha=0.05, eps=0.3, nperm =200, ncores=10,
                  'quad','wshape','diamond','multi',
                  'gauss30','gauss31','gauss32','gauss33',
                  'nb30','nb31','nb32','nb33')
-    methods = c('pearson', 'spearman', 'kendall', 'taustar', 'dcor', 'hsic','hhg','hoeffd', 'mic','rank','ssd')
+    methods = c('Pearson','Spearman','Kendall','TauStar','dCor','HSIC','HoeffD','HHG','MIC','MRank','aLDG')
   }
 
-
   for(type in typelist){
-    filenamedata = paste0(filename,type,'_result_n',n,'.rds')
+    filenamedata = paste0(filename,type,'_result_n',n,'_nperm',nperm,'.rds')
     if(!file.exists(filenamedata)){
       print(filenamedata)
-      if(type=='linear')dat = mgc.sims.linear(n,1,eps)
-      if(type=='exp')dat = mgc.sims.exp(n,1,eps)
-      if(type=='cubic')dat = mgc.sims.cubic(n,1,eps)
-      if(type=='gauss')dat = mgc.sims.joint(n,1,eps)
-      if(type=='step')dat = mgc.sims.step(n,1,eps)
-      if(type=='quad')dat = mgc.sims.quad(n,1,eps)
-      if(type=='wshape')dat = mgc.sims.wshape(n,1,eps)
-      if(type=='spiral')dat = mgc.sims.spiral(n,1,eps)
-      if(type=='ubern')dat = mgc.sims.ubern(n,1,eps)
-      if(type=='log')dat = mgc.sims.log(n,1,eps)
-      if(type=='4root')dat = mgc.sims.4root(n,1,eps)
-      if(type=='sine4pi')dat = mgc.sims.sine(n,1,4,1)
-      if(type=='sine16pi')dat = mgc.sims.sine(n,1,16,0.5)
-      if(type=='square')dat = mgc.sims.square(n,1,eps)
-      if(type=='2parab')dat = mgc.sims.2parab(n,1,eps)
-      if(type=='circle')dat = mgc.sims.circle(n,1,eps)
-      if(type=='ellipse')dat = mgc.sims.ellipse(n,5,eps)
-      if(type=='diamond')dat = mgc.sims.diamond(n,1,eps)
-      if(type=='multi')dat = mgc.sims.multi(n,1)
-      if(type=='indep')dat = mgc.sims.indep(n,1)
-      if(grepl('gauss', type, fixed = TRUE) & !(grepl('hard', type, fixed = TRUE))){
-        vec = strsplit(type,split='')[[1]]
-        groups = vec[6]
-        depgroups = vec[7]
-        print(groups)
-        print(depgroups)
-        dat = sims.gaussmix(n, k=groups, s = depgroups)
-      }
-      if(grepl('nb', type, fixed = TRUE) & !(grepl('hard', type, fixed = TRUE)) & ! grepl('drop', type, fixed = TRUE)){
-        vec = strsplit(type,split='')[[1]]
-        groups = vec[3]
-        depgroups = vec[4]
-        print(groups)
-        print(depgroups)
-        dat = sims.nbmix(n, k=groups, s = depgroups)
-      }
-      if(grepl('gauss', type, fixed = TRUE) & grepl('hard', type, fixed = TRUE)){
-        vec = strsplit(type,split='')[[1]]
-        groups = vec[10]
-        depgroups = vec[11]
-        print(groups)
-        print(depgroups)
-        dat = sims.gausshardmix(n, k=groups, s = depgroups)
-      }
-      if(grepl('nb', type, fixed = TRUE) & grepl('hard', type, fixed = TRUE) & !grepl('drop', type, fixed = TRUE)){
-        vec = strsplit(type,split='')[[1]]
-        groups = vec[7]
-        depgroups = vec[8]
-        print(groups)
-        print(depgroups)
-        dat = sims.nbhardmix(n, k=groups, s = depgroups)
-      }
-      if(grepl('nb', type, fixed = TRUE) & grepl('hard', type, fixed = TRUE) & grepl('drop', type, fixed = TRUE)){
-        vec = strsplit(type,split='')[[1]]
-        groups = vec[11]
-        depgroups = vec[12]
-        print(groups)
-        print(depgroups)
-        dp = as.numeric(vec[length(vec)])/10
-        dat = sims.nbharddropmix(n, k=groups, s=depgroups, dp)
-      }
-
-      if(is.null(dim(dat[[1]])))x <- dat[[1]]
-      else x <- dat[[1]][,1]
-
-      if(is.null(dim(dat[[2]])))y <- dat[[2]]
-      else y <- dat[[2]][,1]
-
-      if(grepl('nb', type, fixed = TRUE)){
-        x = log2(x+1)
-        y = log2(y+1)
-      }
+      
+      data = simubi(n,type,eps)
+      x = data$x
+      y = data$y
       bound = -Inf
-
-    result = compute_corr(x, y, thred=bound, methods = methods, wd=wd)
-    if(nperm>0){
-      nulls <- mclapply(1:nperm, function(i){
-        per <- sample(n)  # resample the IDs for Y
-        return(compute_corr(x,y[per], thred=bound, methods = methods,wd=wd,cutoff=cutoff,qd=qd,band=band))}, mc.cores=ncores)
-
-      exce = sapply(nulls, function(null)null >= result)
-      pval = rowSums(exce)/(nperm + 1)
-      rej = (pval<=alpha)
-      savefilename = paste0(filename,type,'_result_n',n,'.rds')
-      saveRDS(list(dat = dat, val = result, perm = nulls, pval = pval, rej=rej), savefilename)
+      result = bidep(x, y, thred=bound, methods = methods, wd=wd)
+      if(nperm>0){
+        nulls <- mclapply(1:nperm, function(i){
+          per <- sample(n)  # resample the IDs for Y
+          return(bidep(x,y[per], thred=bound, methods = methods,wd=wd,cutoff=cutoff,qd=qd,band=band))}, mc.cores=ncores)
+        
+        exce = sapply(nulls, function(null)null >= result)
+        pval = rowSums(exce)/(nperm + 1)
+        rej = (pval<=alpha)
+        saveRDS(list(dat = dat, val = result, perm = nulls, pval = pval, rej=rej), filenamedata)
+      }else{
+        saveRDS(list(dat = dat, val = result), filenamedata)
+      }
     }
-    else{
-      savefilename = paste0(filename,type,'_val_n',n,'.rds')
-      saveRDS(list(dat = dat, val = result, perm = NULL, pval = NULL, rej=NULL), savefilename)
-    }
-   }
-   re = readRDS(savefilename)
-   if(plot){
-     dat = re[['dat']]
-     if(is.null(dim(dat[[1]])))x <- dat[[1]]
-     else x <- dat[[1]][,1]
-
-     if(is.null(dim(dat[[2]])))y <- dat[[2]]
-     else y <- dat[[2]][,1]
-
-     if(grepl('nb', type, fixed = TRUE)){
-       x = log2(x+1)
-       y = log2(y+1)
-     }
-   }
-   if(length(typelist)==1 & nperm>0)return(re[['rej']]) # return the rejection vector
-   if(length(typelist)==1 & nperm==0 & (!plot))return(re[['val']]) # return the value vector
-   if(length(typelist)==1 & plot)return(list(x,y)) # return the bivariate data itself
- }
+  }
+  re = readRDS(filenamedata)
+  if(length(typelist)==1){
+    return(re)
+  }
 }
-
 
 dir.create('./dat')
 
 # one trial of 200 permutation
 simu_pair<-function(i){
   for(n in c(50, 100, 150, 200)){ # j as sample size
-    cart(paste0('trial ',i, ', sample size ',n,'\n'))
+    cat(paste0('trial ',i, ', sample size ',n,'\n'))
     pairperm(n=n, nperm = 200, ncores = 10, wd=0.5, cutoff=1, band='fix',
              filename = paste0('./dat/permpair_m',i))
   }
@@ -177,68 +90,165 @@ time.taken <- end.time - start.time
 print(time.taken)
 
 # 20 independent trials
-for(i in 1:20){
+for(i in 1){
   simu_pair(i)
 }
 
 #====== plot the results after getting all the results
+dir.create('./plots')
 
-# powmean = list()
-# typelist = c('indep','linear',
-#              'step','ubern','circle','spiral',
-#              'quad','wshape','diamond','multi')
-# #typelist =c('gauss30','gauss31','gauss32','gauss33','nb30','nb31','nb32','nb33')
-#
-# methods = c('pearson', 'spearman', 'kendall', 'taustar', 'dcor', 'hsic','hhg', 'hoeffd','mic','rank','ssd')
-# for(type in typelist){
-#   powmean[[type]] = matrix(0,4,length(methods))
-#   nlist = c(50,100,150,200)
-#   for(n in 1:4){
-#     power = c()
-#     for(i in 1:20){
-#       print(paste0(type, ', n ',nlist[n], ', i',i))
-#       ans = pairperm(n=nlist[n], eps=0.3, nperm=200, typelist = c(type), methods=methods,
-#                      all=FALSE, filename=paste0('./dat/permpair_m',i))
-#       power = rbind(power, ans)
-#     }
-#     print(str(power))
-#     powmean[[type]][n,] = colMeans(1*power)
-#
-#     print(powmean[[type]][n,])
-#   }
-# }
-# coln = c('Pearson', 'Spearman', 'Kendall', 'Taustar', 'dCor', 'HSIC', 'HHG', 'HoeffD', 'MIC','MRank','aLDG')
-# for(type in typelist){
-#   colnames(powmean[[type]]) = methods
-#   rownames(powmean[[type]]) = nlist
-# }
-#
-# tmp_list <- list()
-#
-# for(i in 1:length(typelist)){
-#   dat = data.frame(powmean[[typelist[i]]])
-#   dat[is.na(dat)]=0
-#   mat = melt(dat)
-#   tmp_list[[i]]<-
-#     ggplot(mat, aes(x=rep(nlist, ncol(dat)), y=value, col = factor(variable))) +
-#     geom_line(alpha=0.4)+
-#     geom_point(size=1,alpha=0.4)+
-#     ylim(c(0,1))+
-#     scale_color_manual(name = 'method',
-#                        labels = colnames(dat),
-#                        values = c("pink","darkorange","yellowgreen","darkgreen",
-#                                   "skyblue","steelblue",
-#                                   "darkred","purple3","tan","tan4",
-#                                   "black"))+
-#     xlab('sample size') +
-#     ylab('power') +
-#     ggtitle(typelist[i])+
-#     theme(legend.position='none')
-# }
-# ml=marrangeGrob(grobs = tmp_list, nrow = 2, ncol=5,
-#                 layout_matrix = matrix(1:10, 2, 5, TRUE))
-#
-# ggsave("./plots/permtest.pdf", ml, width=9, height=3.5)
+powmean = list()
+valmean = list()
+typelist = c('indep','linear',
+             'step','ubern','circle','spiral',
+             'quad','wshape','diamond','multi',
+             'gauss30','gauss31','gauss32','gauss33',
+             'nb30','nb31','nb32','nb33')
+
+methods = c('Pearson','Spearman','Kendall','TauStar','dCor','HSIC','HoeffD','HHG','MIC','MRank','aLDG')
+for(type in typelist){
+  nlist = c(50,100,150,200)
+  powmean[[type]] = matrix(0,length(nlist),length(methods))
+  valmean[[type]] = matrix(0,length(nlist),length(methods))
+  for(n in nlist){
+    power = c()
+    val = c()
+    for(i in 1){
+      print(paste0(type, ', n ',nlist[n], ', i',i))
+      ans = pairperm(n=nlist[n], eps=0.3, nperm=200, typelist = c(type), methods=methods,
+                     all=FALSE, filename=paste0('./dat/permpair_m',i))
+      val = rbind(val,ans['val'])
+      power = rbind(power, ans['rej'])
+    }
+    powmean[[type]][n,] = colMeans(1*power)
+    valmean[[type]][n,]=colMeans(val)
+  }
+}
+coln = c('Pearson', 'Spearman', 'Kendall', 'Taustar', 'dCor', 'HSIC', 'HHG', 'HoeffD', 'MIC','MRank','aLDG')
+for(type in typelist){
+  colnames(powmean[[type]]) = methods
+  rownames(powmean[[type]]) = nlist
+  colnames(valmean[[type]]) = methods
+  rownames(valmean[[type]]) = nlist
+}
+
+# plot power
+tmp_list <- list()
+
+for(i in 1:length(typelist)){
+  dat = data.frame(powmean[[typelist[i]]])
+  dat[is.na(dat)]=0
+  mat = melt(dat)
+  tmp_list[[i]]<-
+    ggplot(mat, aes(x=rep(nlist, ncol(dat)), y=value, col = factor(variable))) +
+    geom_line(alpha=0.4)+
+    geom_point(size=1,alpha=0.4)+
+    ylim(c(0,1))+
+    scale_color_manual(name = 'method',
+                       labels = colnames(dat),
+                       values = c("pink","darkorange","yellowgreen","darkgreen",
+                                  "skyblue","steelblue",
+                                  "darkred","purple3","tan","tan4",
+                                  "black"))+
+    xlab('sample size') +
+    ylab('power') +
+    ggtitle(typelist[i])+
+    theme(legend.position='none')
+}
+ml=marrangeGrob(grobs = tmp_list, nrow = 3, ncol=6,
+                layout_matrix = matrix(1:18, 3, 6, TRUE))
+ggsave("./plots/bipower.pdf", ml, width=11, height=6)
+
+# plot value
+tmp_list = list()
+for(i in 1:18){
+  dat = data.frame(methods = factor(coln, levels=coln), 
+                   value = valmean[[typelist[i]]][1,])
+  dat[is.na(dat)]=0
+  mat = melt(dat)
+  alpha=1
+  
+  tmp_list[[i]]<-
+    ggplot(mat, aes(x=methods,
+                    y=abs(value), fill=methods))+
+    geom_bar(stat="identity", width=0.5)+
+    #ylim(c(0,alpha))+
+    scale_fill_manual(name = 'method', 
+                      values = c("pink","darkorange","yellowgreen","darkgreen",
+                                 "skyblue","steelblue",
+                                 "darkred","purple3","tan","tan4",
+                                 "black",
+                                 "tan", "tan4", "brown",
+                                 "purple3",'black'))+
+    xlab('')+
+    ylab('absolute value')+
+    ylim(0,0.75)+
+    ggtitle(typelist[i])+
+    theme(legend.position = 'none',
+          axis.text.x = element_blank())
+}
+ml=ggarrange(plotlist = tmp_list, 
+             nrow = 3, ncol=6,
+             legend = 'none',
+             common.legend =TRUE)
+ggsave("./plots/value.pdf", ml, width=11, height=6)
+
+
+# plot mono
+typelist = c('linear','quad','circle','wshape','diamond')
+epslist = c(0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1)
+methods = c('Pearson', 'Spearman', 'Kendall', 'TauStar', 'dCor', 'HSIC', 'HHG', 'HoeffD', 'MIC','MRank','aLDG')
+valmean = list() 
+for(type in typelist){
+  valmean[[type]] = matrix(0,length(epslist),length(methods))
+  for(n in 1:length(epslist)){
+    value = c()
+    for(i in 1:10){
+      print(paste0(type, ', eps ',epslist[n], ', i',i))
+      ans = pairperm(n=100, eps=epslist[n], nperm=0, typelist = c(type), methods=methods,
+                     all=FALSE, filename=paste0('./dat/dat/mononvalue_eps',epslist[n],'_m',i),plot=FALSE)
+      value = rbind(value, ans)
+    }
+    valmean[[type]][n,] = colMeans(abs(value))
+  }
+}
+coln = c('Pearson', 'Spearman', 'Kendall', 'Taustar', 'dCor', 'HSIC', 'HHG', 'HoeffD', 'MIC','MRank','aLDG')
+for(type in typelist){
+  colnames(valmean[[type]]) = coln
+  rownames(valmean[[type]]) = epslist
+}
+
+tmp_list <- list()
+
+for(i in 1:length(typelist)){
+  dat = data.frame(powmean[[typelist[i]]])
+  dat[is.na(dat)]=0
+  mat = melt(dat)
+  tmp_list[[i]]<-
+    #ggplot(dat, aes(x=factor(methods, levels=methods),y=power,fill=factor(methods, levels=methods)))+
+    ggplot(mat, aes(x=rep(epslist, ncol(dat)), y=value, col = factor(variable))) +
+    #geom_bar(stat="identity", width=0.5)+
+    geom_line(alpha=0.5)+
+    geom_point(size=0.5,alpha=0.3)+
+    #ylim(c(0,1))+
+    scale_color_manual(name = 'method',
+                       labels = colnames(dat),
+                       values = c("pink","darkorange","yellowgreen","darkgreen",
+                                  "skyblue","steelblue",
+                                  "darkred","purple3","tan","tan4",
+                                  "black",
+                                  "tan", "tan4", "brown",
+                                  "purple3",'black'))+
+    xlab('noise level') +
+    ylab('value') +
+    ggtitle(typelist[i])+
+    theme(legend.position='none')
+}
+ml=marrangeGrob(grobs = tmp_list, nrow = 1, ncol=5,
+                layout_matrix = matrix(1:5, 1, 5, TRUE))
+
+ggsave("./plots/monovaluea.pdf", ml, width=10, height=2)
+
 
 
 
