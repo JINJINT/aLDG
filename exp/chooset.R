@@ -1,4 +1,6 @@
 
+setwd('~/aLDG')
+devtools::load_all()
 
 typelist = c('indep','linear',
              'step','ubern','circle','spiral',
@@ -6,21 +8,41 @@ typelist = c('indep','linear',
              'gauss30','gauss31','gauss32','gauss33',
              'nb30','nb31','nb32','nb33')
 
-methods = c('Pearson','Spearman','Kendall','TauStar','dCor','HSIC','HoeffD','HHG','MIC','MRank','aLDG')
-t = seq(0,1,0.01)
-colorlist = c('red','green','blue','orange','purple')
-par(mfrow=c(3,6))
-for(type in typelist){
-  nlist = c(1000)
-  for(n in nlist){
+
+colorlist = c('brown','green','blue','orange','purple',
+              'pink','skyblue','yellow','gray','darkgreen')
+colorlist = rep('darkgray',10)
+par(mfrow=c(3,6),mgp=c(1,0.4,0),mar=rep(2,4),oma=rep(1,4))
+
+nlist = c(1000)
+for(n in nlist){
+  thredlist = list()
+  aldglist = list()
+  wd=1
+  for(type in typelist){
       print(paste0(type, ', n ',n))
       data = simubi(n,type)
       x = data$x
       y = data$y
-      for(i in 1:5){
+      bound=-Inf
+      if(grepl('nb', type, fixed = TRUE))bound=0
+      result = aldg(x,y,
+                    thred=bound, band = 'fix',
+                    wd = wd, qd = 0.1, opt = TRUE,
+                    stat = 'normgap', cutoff = 1)
+      oTvec = result[['Tvec']]
+      t = seq(0,max(oTvec)+0.2,0.005)
+      oavec=sapply(t,function(tt)mean(oTvec>tt))
+      plot(t, oavec, xlab = '', ylab='', main=type, 
+           cex.axis = 1, cex.axis.pos = -1,cex.lab = 0.01,
+           pch=21, cex=0.2, tck=-0.05, cex.main = 1)
+      
+      thredlist[[type]] = c()
+      aldglist[[type]] = c()
+      for(i in 1:10){
         result = aldg(x,y[sample(1:n,n)],
-                      thred=-Inf, band = 'fix',
-                      wd = 0.5, qd = 0.1, opt = TRUE, 
+                      thred=bound, band = 'fix',
+                      wd = wd, qd = 0.1, opt = TRUE, 
                       stat = 'normgap', cutoff = 1)
         Tvec = result[['Tvec']]
         avec=sapply(t,function(tt)mean(Tvec>tt))
@@ -28,32 +50,41 @@ for(type in typelist){
         sTvec = sTvec[which(sTvec>0)]
         s1gapvec = sTvec[1:(length(sTvec)-2)]-sTvec[2:(length(sTvec)-1)]
         s2gapvec = sTvec[2:(length(sTvec)-1)]-sTvec[3:(length(sTvec))]
-        sgapvec = s2gapvec-s1gapvec
-        nstar = which.max(sgapvec)
-        thred = sTvec[nstar]
-        if(i==1){
-          plot(t,avec,main=paste0(type),pch=21,cex=0.1)
-        }else{
-          points(t,avec,main=paste0(type),pch=21,cex=0.1,col=colorlist[i],add=TRUE)
-          }
-        abline(v=thred,col=colorlist[i],add=TRUE)
+        sgapvec = s2gapvec-s1gapvec # prop to second derivative
+        nstar = localMaxima(sgapvec)
+        thred = max(sTvec[nstar])
+        lines(t,avec,main=paste0(type),pch=21,lwd=1,col=alpha(colorlist[i],0.4),add=TRUE)
+        thredlist[[type]][i]=thred 
+        aldglist[[type]][i] = mean(oTvec>thred)
       }
-      # result = aldg(x,y[sample(1:n,n)],
-      #               thred=-Inf, band = 'fix',
-      #               wd = 0.5, qd = 0.1, opt = TRUE, 
-      #               stat = 'normgap', cutoff = 1)
-      # oTvec = result[['Tvec']]
-      # oavec=sapply(t,function(tt)mean(oTvec>tt))
-      # osTvec = sort(oTvec)
-      # osTvec = osTvec[which(osTvec>0)]
-      # os1gapvec = osTvec[1:(length(osTvec)-2)]-osTvec[2:(length(osTvec)-1)]
-      # os2gapvec = osTvec[2:(length(osTvec)-1)]-osTvec[3:(length(osTvec))]
-      # osgapvec = os2gapvec-os1gapvec
-      # onstar = which.max(osgapvec)
-      # othred = osTvec[onstar]
-      # points(t,oavec,main=paste0(type),pch=21,cex=0.1,alpha=0.5,col='red',add=TRUE)
-      # abline(v=othred,col='blue',add=TRUE)
+      abline(v=median(thredlist[[type]]),col='darkorange',add=TRUE,lwd=2)
+      abline(v=qnorm(1-1/n)/(wd*sqrt(sd(x)*sd(y))*n^(1/3)),col='steelblue',add=TRUE,lwd=1.5)
+      thredlist[[type]] = thredlist[[type]]/max(oTvec)
   }
+  
+  ggplot(stack(thredlist)) + 
+    geom_boxplot(aes(x = ind, y = values))+
+    xlab('')+
+    ylab('t* / max(T)')+
+    ylim(0,1)+
+    theme(legend.position = 'None',
+          axis.text.x = element_text(angle = 45, size=10))
+  ggsave(paste0('./plots/thred_n',n,'.pdf'),width=7,height=3)
+  
+  ggplot(stack(aldglist)) + 
+    geom_boxplot(aes(x = ind, y = values))+
+    xlab('')+
+    ylab('aLDG_t*')+
+    ylim(0,1)+
+    theme(legend.position = 'None',
+          axis.text.x = element_text(angle = 45, size=10))
+  ggsave(paste0('./plots/aldg_n',n,'.pdf'),width=7,height=3)
 }
+
+
+
+
+
+
 
 

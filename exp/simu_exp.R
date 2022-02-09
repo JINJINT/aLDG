@@ -1,5 +1,45 @@
 # script to run on the server
-library(aLDG)
+
+packlist=c("pbmcapply",
+    "parallel",
+    "foreach",
+    "doSNOW",
+    "progress",
+    "utils",
+    "energy",
+    "rdist",
+    "dHSIC",
+    "minerva",
+    "doBy",
+    "SC3",
+    "TauStar",
+    "Hmisc",
+    "mvtnorm",
+    "ggplot2",
+    "cowplot",
+    "ggpubr",
+    "ggExtra",
+    "tidyverse",
+    "latex2exp",
+    "reshape2",
+    "NMF",
+    "pheatmap",
+    "gridExtra",
+    "rgl",
+    "ggfortify",
+    "grid",
+    "stats", 
+    "matrixcalc",
+    "VineCopula",
+    "ESCO",
+    "pracma",
+    "MASS",
+    "abind",
+    "HHG")
+lapply(packlist, require, character.only = TRUE)
+setwd('~/aLDG')
+devtools::load_all()
+devtools::load_all('./rankPatterns')
 
 args=(commandArgs(trailingOnly = TRUE))
 
@@ -30,16 +70,19 @@ args=(commandArgs(trailingOnly = TRUE))
 #' @export
 pairperm<-function(n=300, alpha=0.05, eps=0.3, nperm =200, ncores=10,
                    filename='', typelist=c('linear'), methods=NULL, all=TRUE, plot=FALSE,
-                   wd=0.5,qd=0.1,band='fix',cutoff=1){
+                   wd=1,qd=0.1,band='fix',cutoff=1,rerun_aldg=FALSE){
 
   if(all){
     typelist = c('indep','linear',
                  'step','ubern','circle','spiral',
                  'quad','wshape','diamond','multi',
-                 'gauss30','gauss31','gauss32','gauss33',
-                 'nb30','nb31','nb32','nb33')
-    methods = c('Pearson','Spearman','Kendall','TauStar','dCor','HSIC','HoeffD','HHG','MIC','MRank','aLDG')
+                 'gauss30','gauss31','gauss32','gauss33')
+                 #'nb30','nb31','nb32','nb33')
+    methods = c('Pearson','Spearman','Kendall','TauStar','dCor','HSIC','HoeffD','MIC','MRank','aLDG')
   }
+  #if(n>300){
+  #  methods = methods[which(methods!='HHG')]
+  #}
 
   for(type in typelist){
     filenamedata = paste0(filename,type,'_result_n',n,'_nperm',nperm,'.rds')
@@ -49,7 +92,8 @@ pairperm<-function(n=300, alpha=0.05, eps=0.3, nperm =200, ncores=10,
       data = simubi(n,type,eps)
       x = data$x
       y = data$y
-      bound = -Inf
+      bound=-Inf
+      if(grepl('nb', type, fixed = TRUE))bound=0
       result = bidep(x, y, thred=bound, methods = methods, wd=wd)
       if(nperm>0){
         nulls <- mclapply(1:nperm, function(i){
@@ -57,11 +101,38 @@ pairperm<-function(n=300, alpha=0.05, eps=0.3, nperm =200, ncores=10,
           return(bidep(x,y[per], thred=bound, methods = methods,wd=wd,cutoff=cutoff,qd=qd,band=band))}, mc.cores=ncores)
         
         exce = sapply(nulls, function(null)null >= result)
-        pval = rowSums(exce)/(nperm + 1)
+        pval = rowSums(exce)/nperm
         rej = (pval<=alpha)
-        saveRDS(list(dat = dat, val = result, perm = nulls, pval = pval, rej=rej), filenamedata)
+        saveRDS(list(dat = data, val = result, perm = nulls, pval = pval, rej=rej), filenamedata)
       }else{
-        saveRDS(list(dat = dat, val = result), filenamedata)
+        saveRDS(list(dat = data, val = result), filenamedata)
+      }
+    }else{
+      if(rerun_aldg==TRUE){ # still recompute aLDG
+        re = readRDS(filenamedata)
+        x = re[['dat']]$x
+        y = re[['dat']]$y
+        bound=-Inf
+        if(grepl('nb', type, fixed = TRUE))bound=0
+        result = bidep(x, y, thred=bound, methods = c("aLDG"), wd=wd)
+        re[['val']][['aLDG']] = result[['aLDG']]
+        if(nperm>0){
+          nulls <- mclapply(1:nperm, function(i){
+            per <- sample(n)  # resample the IDs for Y
+            return(bidep(x,y[per], thred=bound, methods = c("aLDG"),wd=wd,cutoff=cutoff,qd=qd,band=band))}, mc.cores=ncores)
+          #print(str(nulls))
+          exce = sapply(nulls, function(null)null >= result)
+          pval = sum(exce)/nperm
+          rej = (pval<=alpha)
+          for(i in 1:nperm){
+            re[['perm']][[i]][['aLDG']] = nulls[[i]][['aLDG']]
+          }
+          re[['pval']][['aLDG']]=pval
+          re[['rej']][['aLDG']]=rej
+          saveRDS(re, filenamedata)
+        }else{
+          saveRDS(re, filenamedata)
+        }
       }
     }
   }
@@ -75,9 +146,9 @@ dir.create('./dat')
 
 # one trial of 200 permutation
 simu_pair<-function(i){
-  for(n in c(50, 100, 150, 200)){ # j as sample size
+  for(n in c(50,100,150,200)){ # j as sample size
     cat(paste0('trial ',i, ', sample size ',n,'\n'))
-    pairperm(n=n, nperm = 200, ncores = 10, wd=0.5, cutoff=1, band='fix',
+    pairperm(n=n, nperm = 200, ncores = 10, wd=1, cutoff=1, band='fix', rerun_aldg = FALSE,
              filename = paste0('./dat/permpair_m',i))
   }
 }
@@ -90,7 +161,7 @@ time.taken <- end.time - start.time
 print(time.taken)
 
 # 20 independent trials
-for(i in 1){
+for(i in 1:20){
   simu_pair(i)
 }
 
@@ -105,26 +176,26 @@ typelist = c('indep','linear',
              'gauss30','gauss31','gauss32','gauss33',
              'nb30','nb31','nb32','nb33')
 
-methods = c('Pearson','Spearman','Kendall','TauStar','dCor','HSIC','HoeffD','HHG','MIC','MRank','aLDG')
+methods = c('Pearson','Spearman','Kendall','TauStar','dCor','HSIC','HoeffD','MIC','MRank','aLDG')
 for(type in typelist){
   nlist = c(50,100,150,200)
+  #nlist = c(100)
   powmean[[type]] = matrix(0,length(nlist),length(methods))
   valmean[[type]] = matrix(0,length(nlist),length(methods))
-  for(n in nlist){
+  for(n in 1:length(nlist)){
     power = c()
     val = c()
-    for(i in 1){
+    for(i in 1:20){
       print(paste0(type, ', n ',nlist[n], ', i',i))
       ans = pairperm(n=nlist[n], eps=0.3, nperm=200, typelist = c(type), methods=methods,
                      all=FALSE, filename=paste0('./dat/permpair_m',i))
-      val = rbind(val,ans['val'])
-      power = rbind(power, ans['rej'])
+      val = rbind(val,ans[['val']][methods])
+      power = rbind(power, ans[['rej']][methods])
     }
     powmean[[type]][n,] = colMeans(1*power)
     valmean[[type]][n,]=colMeans(val)
   }
 }
-coln = c('Pearson', 'Spearman', 'Kendall', 'Taustar', 'dCor', 'HSIC', 'HHG', 'HoeffD', 'MIC','MRank','aLDG')
 for(type in typelist){
   colnames(powmean[[type]]) = methods
   rownames(powmean[[type]]) = nlist
@@ -148,7 +219,9 @@ for(i in 1:length(typelist)){
                        labels = colnames(dat),
                        values = c("pink","darkorange","yellowgreen","darkgreen",
                                   "skyblue","steelblue",
-                                  "darkred","purple3","tan","tan4",
+                                  "darkred",
+                                  #"purple3",
+                                  "tan","tan4",
                                   "black"))+
     xlab('sample size') +
     ylab('power') +
@@ -161,9 +234,9 @@ ggsave("./plots/bipower.pdf", ml, width=11, height=6)
 
 # plot value
 tmp_list = list()
-for(i in 1:18){
-  dat = data.frame(methods = factor(coln, levels=coln), 
-                   value = valmean[[typelist[i]]][1,])
+for(i in 1:length(typelist)){
+  dat = data.frame(methods = factor(methods, levels=methods), 
+                   value = valmean[[typelist[i]]][4,])
   dat[is.na(dat)]=0
   mat = melt(dat)
   alpha=1
@@ -176,13 +249,15 @@ for(i in 1:18){
     scale_fill_manual(name = 'method', 
                       values = c("pink","darkorange","yellowgreen","darkgreen",
                                  "skyblue","steelblue",
-                                 "darkred","purple3","tan","tan4",
+                                 "darkred",
+                                 #"purple3",
+                                 "tan","tan4",
                                  "black",
                                  "tan", "tan4", "brown",
                                  "purple3",'black'))+
     xlab('')+
     ylab('absolute value')+
-    ylim(0,0.75)+
+    ylim(c(0,1))+
     ggtitle(typelist[i])+
     theme(legend.position = 'none',
           axis.text.x = element_blank())
@@ -198,30 +273,29 @@ ggsave("./plots/value.pdf", ml, width=11, height=6)
 typelist = c('linear','quad','circle','wshape','diamond')
 epslist = c(0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1)
 methods = c('Pearson', 'Spearman', 'Kendall', 'TauStar', 'dCor', 'HSIC', 'HHG', 'HoeffD', 'MIC','MRank','aLDG')
-valmean = list() 
+monovalmean = list() 
 for(type in typelist){
-  valmean[[type]] = matrix(0,length(epslist),length(methods))
+  monovalmean[[type]] = matrix(0,length(epslist),length(methods))
   for(n in 1:length(epslist)){
     value = c()
     for(i in 1:10){
       print(paste0(type, ', eps ',epslist[n], ', i',i))
       ans = pairperm(n=100, eps=epslist[n], nperm=0, typelist = c(type), methods=methods,
-                     all=FALSE, filename=paste0('./dat/dat/mononvalue_eps',epslist[n],'_m',i),plot=FALSE)
-      value = rbind(value, ans)
+                     all=FALSE, rerun_aldg = TRUE, filename=paste0('./dat/mononvalue_eps',epslist[n],'_m',i),plot=FALSE)
+      value = rbind(value, ans$val)
     }
-    valmean[[type]][n,] = colMeans(abs(value))
+    monovalmean[[type]][n,] = colMeans(abs(value))
   }
 }
-coln = c('Pearson', 'Spearman', 'Kendall', 'Taustar', 'dCor', 'HSIC', 'HHG', 'HoeffD', 'MIC','MRank','aLDG')
 for(type in typelist){
-  colnames(valmean[[type]]) = coln
-  rownames(valmean[[type]]) = epslist
+  colnames(monovalmean[[type]]) = methods
+  rownames(monovalmean[[type]]) = epslist
 }
 
 tmp_list <- list()
 
 for(i in 1:length(typelist)){
-  dat = data.frame(powmean[[typelist[i]]])
+  dat = data.frame(monovalmean[[typelist[i]]])
   dat[is.na(dat)]=0
   mat = melt(dat)
   tmp_list[[i]]<-

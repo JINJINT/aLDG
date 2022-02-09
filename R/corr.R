@@ -272,8 +272,7 @@ matdep<-function(data, methods=NULL, all = FALSE,
 aldg<-function(x, y, sx = NULL, sy = NULL,
                thred=-Inf, hx=NULL, hy=NULL, band = 'fix',
                wd = 0.5, qd = 0.1, opt = TRUE, 
-               stat = 'normgap', cutoff = 1, 
-               chooset=NULL){
+               stat = 'normgap', cutoff = 1,trials=5){
   
   n = length(x)
   
@@ -285,7 +284,7 @@ aldg<-function(x, y, sx = NULL, sy = NULL,
   }else{
     id = 1:n
   }
-  
+  tlist = c()
   nt = length(id)
   if(nt>10){
     xt = x[id]
@@ -307,41 +306,79 @@ aldg<-function(x, y, sx = NULL, sy = NULL,
                      bandlist = c(band),
                      chooset = FALSE,
                      stat = stat, opt=opt)
-    }
-    else{
+      for(i in 1:trials){
+         renull = ldgsingle(xt, yt[sample(1:nt,nt)], NULL,
+                         rx=rx,
+                         dx=sx[['dist']][rid,rid],
+                         hx=hx, hy=hy,
+                         wd=wd, kernel = 'box',
+                         bandlist = c(band),
+                         chooset = FALSE,
+                         stat = stat, opt=opt)
+         Tvec = renull[[1]][[band]]
+         sTvec = sort(Tvec)
+         sTvec = sTvec[which(sTvec>0)]
+         s1gapvec = sTvec[1:(length(sTvec)-2)]-sTvec[2:(length(sTvec)-1)]
+         s2gapvec = sTvec[2:(length(sTvec)-1)]-sTvec[3:(length(sTvec))]
+         sgapvec = s2gapvec-s1gapvec
+         nstar = localMaxima(sgapvec)
+         tlist[i] = max(sTvec[nstar])
+      }
+    }else{
       re = ldgsingle(xt, yt, NULL,
                      hx=hx, hy=hy,
                      wd=wd, kernel = 'box',
                      bandlist = c(band),
                      chooset = FALSE,
                      stat = stat,opt=opt)
+      for(i in 1:trials){
+        renull = ldgsingle(xt, yt[sample(1:nt,nt)], NULL,
+                           hx=hx, hy=hy,
+                           wd=wd, kernel = 'box',
+                           bandlist = c(band),
+                           chooset = FALSE,
+                           stat = stat,opt=opt)
+        Tvec = renull[[1]][[band]]
+        sTvec = sort(Tvec)
+        sTvec = sTvec[which(sTvec>0)]
+        s1gapvec = sTvec[1:(length(sTvec)-2)]-sTvec[2:(length(sTvec)-1)]
+        s2gapvec = sTvec[2:(length(sTvec)-1)]-sTvec[3:(length(sTvec))]
+        sgapvec = s2gapvec-s1gapvec
+        nstar = localMaxima(sgapvec)
+        tlist[i] = max(sTvec[nstar])
+      }
     }
-    if(!is.null(re[[2]]))t = re[[2]]
-    else{
+    
+    if(!is.null(renull[[2]])){
+      t = re[[2]]
+    }else{
       #if(stat=='normgap'){
       #  t = qnorm(1-1/(nt)^cutoff)/nt^(1/3)
       #}
       #if(stat=='probnormgap'){
       #  t =qnorm(1-1/(nt)^cutoff)
       #}
-      Tvec = re[[1]][[band]]
-      sTvec = sort(Tvec)
-      sTvec = sTvec[which(sTvec>0)]
-      s1gapvec = sTvec[1:(length(sTvec)-2)]-sTvec[2:(length(sTvec)-1)]
-      s2gapvec = sTvec[2:(length(sTvec)-1)]-sTvec[3:(length(sTvec))]
-      sgapvec = s2gapvec-s1gapvec
-      nstar = which.max(sgapvec)
-      t = sTvec[nstar]
+      t = median(tlist)
     }
     result[id] = re[[1]][[band]]
     return(list(aldg=mean(result>t),Tvec = result))
-  }
-  else{
+  }else{
     return(list(aldg =0, Tvec = NULL))
   }
 }
 
 
+#' @export
+localMaxima <- function(x){
+   y <- diff(c(-Inf, x)) > 0L
+   rle(y)$lengths
+   y <- cumsum(rle(y)$lengths)
+   y <- y[seq.int(1L, length(y), 2L)]
+   if (x[[1]] == x[[2]]) {
+      y <- y[-1]
+   }
+   y
+}
 
 #' @export
 ldgsingle<-function(x,y, id = NULL,
