@@ -45,7 +45,7 @@
 #' @export
 bidep<-function(x, y, sx = NULL, sy = NULL, methods=NULL, all = FALSE,
                       thred=-Inf, hx=NULL, hy=NULL, band = 'fix',
-                      wd = 0.5, qd = 0.1, opt = TRUE, stat = 'normgap', cutoff = 1){
+                      wd = 1, qd = 0.1, opt = TRUE, stat = 'normgap', cutoff = 1){
 
   if(length(x)!=length(y)){
     print('The length of x and y should be the same!')
@@ -92,7 +92,7 @@ bidep<-function(x, y, sx = NULL, sy = NULL, methods=NULL, all = FALSE,
       corr[method]=aldg(x, y, sx = sx, sy = sy,
                         thred = thred, hx = hx, hy = hy, band = band,
                         wd = wd, qd =qd, opt = opt, 
-                        stat = stat, cutoff = cutoff)$aldg
+                        stat = stat, cutoff = cutoff)$val
     }
   }
   return(corr)
@@ -101,80 +101,81 @@ bidep<-function(x, y, sx = NULL, sy = NULL, methods=NULL, all = FALSE,
 
 
 
-#' Function to compute the pairwise dependency matrix for multivariate data
-#' @param data: feature (row) by sample (column) matrix
-#' @param methods: same as that in function bidep
-#' @param all: same as that in function bidep, but omit 'hhg' since it takes too long
-#' @param thred,cutoff,wd,qd,opt,band,stat: same as that in function bidep, parameters specific to aLDG method
-#' @param trial: integer denote the trial number
+#' Function to compute the multivariate dependency matrix
+#' @param data: feature by sample matrix
+#' @param methods: a vector of strings, could be subset of c('pearson','kendall','taustar','dcor','hsic','hoeffd','ssd')
+#' @param all: logical value, if true then compute for all methods in c('pearson','kendall','taustar','dcor','hsic','hoeffd','ssd')
+#' @param thred: only the data > thred will be used
+#' @param wd: the coefficient before the bandwidth h = wd*h_n
+#' @param qd: the quantile window to compute the adaptive bandwidth h_x = sd(x(qd))
+#' @param info: integer denote the trial number
 #' @param ncores: number of cores to use
-#' @param norm: whether scale the value to \eqn{[0,1]}
+#' @param norm: whether scale the value to [0,1]
 #' @param abs: whether take absolute value of the value
-#' @param info: information related to the settings
-#' @param dir: the name of directory to save the results
+#' @param extrainfo: some setting related information
 #' @return a list of matrix
 #' @examples
-#' Load example data
-#' ans = matdep(runif(100,5,20), methods='aldg')
+#' # Load example data
+#' ans = matdep(runif(100,5,20), methods='ssd')
 #' @rdname matdep
 #' @export
-matdep<-function(data, methods=NULL, all = FALSE,
+matdep<-function(data, methods=NULL, 
+                          all = FALSE,
                           thred = -Inf, cutoff = 1,
-                          wd = 0.5, qd = 0.1,
+                          wd = 1, qd = 0.1,  
                           opt=TRUE, band = 'fix',
                           stat = 'normgap',
-                          trial = 0, ncores=NULL,
+                          trial = 0,
+                          ncores=NULL, 
                           norm = FALSE, abs = FALSE,
                           info = '', dir='./dat/'){
-
+  
   if(!dir.exists(dir))dir.create(dir)
-
-  thisfilename = paste0(dir,'matdep_',info,'_trial', trial,'.rds')
-
+  
+  thisfilename = paste0(dir,'corrmat_',info, trial,'.rds')
+  
   if(!file.exists(thisfilename)){
-    if(all)methods = c('pearson','spearman','kendall','taustar','dcor','hsic','hoeffd','mic','rank','aldg')
+    #print(thisfilename)
+    if(all)methods = c('Pearson','Spearman','Kendall','TauStar','dCor','HSIC','HoeffD','MIC','MRank','aLDG')
     p = nrow(data)
     n = ncol(data)
-
-    # function to do sorting for a single feature of the data
-    sort_single<-function(feature){
-      sortx = sort(data[feature,], index.return = TRUE)
+    
+    sort_single<-function(gene){
+      sortx = sort(data[gene,], index.return = TRUE)
       sx = sortx$x
       rx = sortx$ix
       dx = matrix(0,n,n)
       drx = sapply(1:n, function(i)abs(sx-sx[i]))
       dx[rx,rx] = drx
-      return(list(rank=rx, dist=dx))
+      return(list(rank=rx,dist=dx))
     }
-
-    # sort for all features
+    
     if (!is.null(ncores)){
       cl <- makeCluster(ncores)
       registerDoSNOW(cl)
-
+      
       pb <- progress_bar$new(
         format = "progress = :letter [:bar] :elapsed | eta: :eta", total = p, width = 60)
-
+      
       progress <- function(n){
         pb$tick(tokens = list(letter = rep("", p)[n]))
       }
       opts <- list(progress = progress)
-
-      sortlist <- foreach(i = 1:p, .options.snow = opts,
-                          .export=c('ldgsingle','kernallist'))%dopar% {
+      
+      sortlist <- foreach(i = 1:p, .options.snow = opts)%dopar% {
                             return(sort_single(i))
                           }
+      
+      
       stopCluster(cl)
     }else{
-      sortlist <- lapply(1:p, sort_single) # list of p lists
+      sortlist <- lapply(1:p, sort_single) # n*p
     }
-
-    # gather all the possible feature pairs
+    
     index = expand.grid(c(1:p),c(1:p))
     index = index[which(index[,1]<index[,2]),]
     total <- nrow(index)
-
-    # function to compute the bivariate dependence for a single pair of features
+    
     compute_single<-function(k,verbose = FALSE){
       i = index[k,1]
       j = index[k,2]
@@ -182,41 +183,43 @@ matdep<-function(data, methods=NULL, all = FALSE,
       y = data[j,]
       sx = sortlist[[i]]
       sy = sortlist[[j]]
-      allvec = bidep(x, y, sx=sx, sy=sy,  wd = wd, qd = qd,
-                            opt = opt, band=band, stat=stat,
+      allvec = bidep(x, y, sx=sx, sy=sy,  wd = wd, qd = qd, 
+                            opt = opt, band=band, stat=stat, 
                             thred=thred, methods = methods, cutoff=cutoff)
       return(allvec)
     }
-
-    # compute bivariate dependence for all features pairs
+    
     if(!is.null(ncores)){
       cl <- makeCluster(ncores)
       registerDoSNOW(cl)
-
+      
       pb <- progress_bar$new(
         format = "progress = :letter [:bar] :elapsed | eta: :eta", total = total, width = 60)
-
+      
       progress <- function(n){
         pb$tick(tokens = list(letter = rep("", total)[n]))
       }
-
+      
       opts <- list(progress = progress)
-
+      
       allmat <- foreach(i = 1:total, .combine = cbind, .options.snow = opts,
-                        .export=c('dcor','dhsic','tStar','ldgsingle','hoeffd','compute_corr','kernallist','mine')
-      )%dopar% {return(compute_single(i))}
+                        .export=c('ldgsingle','kernallist','aldg','bidep'),
+                        .packages = c('dHSIC','TauStar','minerva','Hmisc','energy')
+      )%dopar% {
+        devtools::load_all('./rankPatterns')
+        return(compute_single(i))
+        }
       stopCluster(cl)
     }
     else{
-      allmat <- sapply(1:total,compute_single, verbose=TRUE) # a matrix of (# methods) * (# feature pairs)
+      allmat <- sapply(1:total,compute_single, verbose=TRUE)
     }
   }
   else{
     print('file already existed...extracting results...')
     allmat <- readRDS(thisfilename)
   }
-
-  # convert to list of pairwise dependence matrix
+  
   corrmat = list()
   methods = rownames(allmat)
   for(idx in 1:nrow(allmat)){
@@ -271,7 +274,7 @@ matdep<-function(data, methods=NULL, all = FALSE,
 #' @export
 aldg<-function(x, y, sx = NULL, sy = NULL,
                thred=-Inf, hx=NULL, hy=NULL, band = 'fix',
-               wd = 0.5, qd = 0.1, opt = TRUE, 
+               wd = 1, qd = 0.1, opt = TRUE, 
                stat = 'normgap', cutoff = 1,trials=5){
   
   n = length(x)
@@ -308,8 +311,6 @@ aldg<-function(x, y, sx = NULL, sy = NULL,
                      stat = stat, opt=opt)
       for(i in 1:trials){
          renull = ldgsingle(xt, yt[sample(1:nt,nt)], NULL,
-                         rx=rx,
-                         dx=sx[['dist']][rid,rid],
                          hx=hx, hy=hy,
                          wd=wd, kernel = 'box',
                          bandlist = c(band),
@@ -339,17 +340,20 @@ aldg<-function(x, y, sx = NULL, sy = NULL,
                            chooset = FALSE,
                            stat = stat,opt=opt)
         Tvec = renull[[1]][[band]]
+        Tvec = Tvec[!is.na(Tvec)]
         sTvec = sort(Tvec)
         sTvec = sTvec[which(sTvec>0)]
-        s1gapvec = sTvec[1:(length(sTvec)-2)]-sTvec[2:(length(sTvec)-1)]
-        s2gapvec = sTvec[2:(length(sTvec)-1)]-sTvec[3:(length(sTvec))]
-        sgapvec = s2gapvec-s1gapvec
-        nstar = localMaxima(sgapvec)
-        tlist[i] = max(sTvec[nstar])
+        if(length(sTvec)<5)tlist[i]=NA
+        else{
+          s1gapvec = sTvec[1:(length(sTvec)-2)]-sTvec[2:(length(sTvec)-1)]
+          s2gapvec = sTvec[2:(length(sTvec)-1)]-sTvec[3:(length(sTvec))]
+          sgapvec = s2gapvec-s1gapvec
+          nstar = localMaxima(sgapvec)
+          tlist[i] = max(sTvec[nstar])
+        }
       }
     }
-    
-    if(!is.null(renull[[2]])){
+    if(!is.null(re[[2]])){
       t = re[[2]]
     }else{
       #if(stat=='normgap'){
@@ -358,26 +362,30 @@ aldg<-function(x, y, sx = NULL, sy = NULL,
       #if(stat=='probnormgap'){
       #  t =qnorm(1-1/(nt)^cutoff)
       #}
-      t = median(tlist)
+      t = median(tlist,na.rm = TRUE)
+      if(is.na(t))t=qnorm(1-1/(nt)^cutoff)/nt^(1/3)
     }
     result[id] = re[[1]][[band]]
-    return(list(aldg=mean(result>t),Tvec = result))
+    return(list(val =mean(result>t),Tvec = result))
   }else{
-    return(list(aldg =0, Tvec = NULL))
+    return(list(val =0, Tvec = NULL))
   }
 }
 
 
 #' @export
 localMaxima <- function(x){
-   y <- diff(c(-Inf, x)) > 0L
-   rle(y)$lengths
+   y <- diff(c(-Inf, x)) >= 0
    y <- cumsum(rle(y)$lengths)
-   y <- y[seq.int(1L, length(y), 2L)]
-   if (x[[1]] == x[[2]]) {
-      y <- y[-1]
+   y <- y[seq.int(1, length(y), 2)]
+
+   if (y[1]==1) {
+       y <- y[-c(1)]
    }
-   y
+   if(length(y)>1){
+     if(y[length(y)]==length(x))y <- y[-c(length(y))]
+   }
+   return(y)
 }
 
 #' @export

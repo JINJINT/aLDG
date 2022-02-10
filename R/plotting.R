@@ -256,7 +256,7 @@ plot2d<-function(x, y, index, info = NULL, corr = NULL, extra = NULL,
 }
 
 #' @export
-plot2dsingle<-function(x, y, color = NULL, extra = NULL, type=NULL, title='',info=''){
+plot2dsingle<-function(x, y, xlab, ylab, color = NULL, extra = NULL, type=NULL, title=NULL,info=NULL){
   if(is.null(color)){
     df = data.frame(x=x, y=y)
     p <- ggplot(df, aes(x, y) ) + geom_point(alpha = 0.7, size = 0.1)+
@@ -266,24 +266,25 @@ plot2dsingle<-function(x, y, color = NULL, extra = NULL, type=NULL, title='',inf
   else{
     type = paste0(type,'corr')
     df = data.frame(x=x, y=y, corr = color)
-
-    p<-ggplot(data = df, aes(x, y, color = corr)) +
-         geom_point(alpha = 0.5, size = 0.01) +
-         ggtitle(title) +
-         xlab("X")+
-      ylab("Y")+
-      labs(color='value')  +
-      #theme(legend.position="bottom")+
-      theme(axis.text.x = element_text(size=10),
-            axis.text.y = element_text(size=10),
-            plot.title = element_text(size=12, hjust = 0),
-            axis.title.x = element_text(size=12),
-            axis.title.y = element_text(size=12))+
-      scale_color_gradient2(low="royalblue4", mid = "white", high="darkred", midpoint = 0)
-      #scale_color_gradient2(low="royalblue4", high="darkred")
+    
+    p<-ggplot(df, aes(x, y)) +
+      geom_point(aes(color = corr), alpha = 0.4, size = 0.7) +
+      ggtitle(title) +
+      xlab(xlab)+ 
+      ylab(ylab)+
+      labs(color='cell type',caption = paste(paste0(paste0(names(info), '=', info),'\n'),collapse = ''))  +
+      #scale_color_hue(labels = c("H1","H9","DEC","EC","HFF","NPC","TB")) +
+      theme(legend.position="none")+
+      theme(axis.text.x = element_text(size=15),
+            axis.text.y = element_text(size=15),
+            plot.title = element_text(size=18, hjust = 0),
+            axis.title.x = element_text(size=18),
+            axis.title.y = element_text(size=18))+
+      guides(color = guide_legend(override.aes = list(size = 5)))
+    #scale_color_gradient2(low="royalblue4", mid = "white", high="darkred", midpoint = 0, limits = c(-max(abs(df$corr)),max(abs(df$corr))))
+    #scale_color_gradient2(low="royalblue4", high="darkred")
     #annotate_figure(p, bottom = text_grob(paste0('dCorr=', round(extra[1],2), '    pearson=', round(extra[2],2), '    CSN=', round(extra[3],2)), color = "black", size = 12))
-    ggsave(filename = paste0('./plots/', type, "_",info,".pdf"), width = 4, height = 3)
-    return(p)
-    }
+    ggsave(filename = paste0('./plots/', type,'.pdf'), width = 3.5, height = 4.5)
+  }
 }
 

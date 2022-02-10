@@ -115,7 +115,7 @@ pairperm<-function(n=300, alpha=0.05, eps=0.3, nperm =200, ncores=10,
         bound=-Inf
         if(grepl('nb', type, fixed = TRUE))bound=0
         result = bidep(x, y, thred=bound, methods = c("aLDG"), wd=wd)
-        re[['val']][['aLDG']] = result[['aLDG']]
+        re[['val']][['aLDG']] = result[['val']]
         if(nperm>0){
           nulls <- mclapply(1:nperm, function(i){
             per <- sample(n)  # resample the IDs for Y

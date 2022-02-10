@@ -15,7 +15,7 @@ bidep(
   hx = NULL,
   hy = NULL,
   band = "fix",
-  wd = 0.5,
+  wd = 1,
   qd = 0.1,
   opt = TRUE,
   stat = "normgap",

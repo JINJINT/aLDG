@@ -2,7 +2,7 @@
 % Please edit documentation in R/corr.R
 \name{matdep}
 \alias{matdep}
-\title{Function to compute the pairwise dependency matrix for multivariate data}
+\title{Function to compute the multivariate dependency matrix}
 \usage{
 matdep(
   data,
@@ -10,7 +10,7 @@ matdep(
   all = FALSE,
   thred = -Inf,
   cutoff = 1,
-  wd = 0.5,
+  wd = 1,
   qd = 0.1,
   opt = TRUE,
   band = "fix",
@@ -24,33 +24,35 @@ matdep(
 )
 }
 \arguments{
-\item{thred, cutoff, wd, qd, opt, band, stat:}{same as that in function bidep, parameters specific to aLDG method}
+\item{data:}{feature by sample matrix}
 
-\item{data:}{feature (row) by sample (column) matrix}
+\item{methods:}{a vector of strings, could be subset of c('pearson','kendall','taustar','dcor','hsic','hoeffd','ssd')}
 
-\item{methods:}{same as that in function bidep}
+\item{all:}{logical value, if true then compute for all methods in c('pearson','kendall','taustar','dcor','hsic','hoeffd','ssd')}
 
-\item{all:}{same as that in function bidep, but omit 'hhg' since it takes too long}
+\item{thred:}{only the data > thred will be used}
 
-\item{trial:}{integer denote the trial number}
+\item{wd:}{the coefficient before the bandwidth h = wd*h_n}
+
+\item{qd:}{the quantile window to compute the adaptive bandwidth h_x = sd(x(qd))}
+
+\item{info:}{integer denote the trial number}
 
 \item{ncores:}{number of cores to use}
 
-\item{norm:}{whether scale the value to \eqn{[0,1]}}
+\item{norm:}{whether scale the value to [0,1]}
 
 \item{abs:}{whether take absolute value of the value}
 
-\item{info:}{information related to the settings}
-
-\item{dir:}{the name of directory to save the results}
+\item{extrainfo:}{some setting related information}
 }
 \value{
 a list of matrix
 }
 \description{
-Function to compute the pairwise dependency matrix for multivariate data
+Function to compute the multivariate dependency matrix
 }
 \examples{
-Load example data
-ans = matdep(runif(100,5,20), methods='aldg')
+# Load example data
+ans = matdep(runif(100,5,20), methods='ssd')
 }
