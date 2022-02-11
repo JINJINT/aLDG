@@ -57,7 +57,7 @@ run_batch_permutation<-function(nperm){
         #print(str(permidx))
         sLED_one(X, Y, nperm, permidx, methods =  c('Pearson','aLDG'), 
                  thred = 0, abs = FALSE, norm = FALSE, mc.cores=NULL,
-                 extrainfo = paste0(datafilelist[i],'_aldg_trial',k))
+                 extrainfo = paste0(datafilelist[i],'_aldgwd0.5_trial',k))
       }
     }
   }
