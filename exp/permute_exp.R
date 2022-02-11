@@ -57,7 +57,7 @@ run_batch_permutation<-function(nperm){
         #print(str(permidx))
         sLED_one(X, Y, nperm, permidx, methods =  c('Pearson','aLDG'), 
                  thred = 0, abs = FALSE, norm = FALSE, mc.cores=NULL,
-                 extrainfo = paste0(datafilelist[i],'_aldgwd0.5_trial',k))
+                 extrainfo = paste0(datafilelist[i],'_aldgwd2_trial',k))
       }
     }
   }
@@ -103,25 +103,27 @@ print(end-st)
 #genesvel50 = rownames(d[[1]])  
 
 # 
-# ans = c()
-# for(k in 1:10){
-#   filename = paste0('./realdat/0.1nowvel_celltypeL23_50_trial',k,'.rds')
-#   dat = readRDS(filename)
-# 
-#   X = log2(dat[[1]]+1)
-#   Y = log2(dat[[2]]+1)
-# 
-#   filelist = list.files("./dat",
-#                         pattern=paste0('sledstat_nowvel_celltypeL23_50_aldg_trial',k,'_.*.rds'),
-#                         full.names = TRUE)
-# 
-#   ans = cbind(ans,sLED_all(X, Y, npermute=200, methods = c('Pearson', 'aLDG'),
-#                  thred=0, abs = FALSE, norm = FALSE,
-#                  extrainfo = paste0('nowvel_celltypeL23_50_aldg_trial',k),
-#                  filelist=filelist)$pVal)
-# 
-# }
-# print(ans)
+ans = c()
+for(k in 1:10){
+  filename = paste0('./realdat/0.1nowvel_celltypeL23_50_trial',k,'.rds')
+  dat = readRDS(filename)
+
+  X = log2(dat[[1]]+1)
+  Y = log2(dat[[2]]+1)
+
+  filelist = list.files("./dat",
+                        pattern=paste0('sledstat_nowvel_celltypeL23_50_aldgwd0.5_trial',k,'_.*.rds'),
+                        full.names = TRUE)
+
+  ans = cbind(ans,sLED_all(X, Y, npermute=200, methods = c('Pearson', 'aLDG'),
+                 thred=0, abs = FALSE, norm = FALSE,
+                 extrainfo = paste0('nowvel_celltypeL23_50_aldgwd0.5_trial',k),
+                 filelist=filelist)$pVal)
+
+}
+print(ans)
+
+rowMeans(ans)
 
 
 # 
