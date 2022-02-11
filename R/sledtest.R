@@ -6,13 +6,13 @@ getDiffMatrix<-function(X,Y,methods,thred=-Inf,info=0, norm = FALSE, abs = FALSE
                           thred = thred, info=paste0(extrainfo,'X'),trial=info,
                           norm = norm, abs = abs, 
                           stat = 'normgap', band = 'fix',
-                          wd = 1, qd = 0.05, opt=TRUE, cutoff =1,
+                          wd = 0.5, qd = 0.05, opt=TRUE, cutoff =1,
                           dir=dir,ncores=ncores)
     CY <- matdep(Y, methods = methods,
                           thred = thred, info=paste0(extrainfo,'Y'),trial=info,
                           norm = norm, abs = abs, 
                           stat = 'normgap', band = 'fix',
-                          wd = 1, qd = 0.05, opt=TRUE, cutoff =1,
+                          wd = 0.5, qd = 0.05, opt=TRUE, cutoff =1,
                           dir=dir,ncores=ncores)
     methods = names(CX)
     for(i in 1:length(methods)){
@@ -84,8 +84,7 @@ sLED_all <- function(X, Y, thred = -Inf, methods = c('Pearson'),
     saveRDS(Tn_list, filenamenull)
   }
   Tn = readRDS(filenamenull)
-  #print(str(Tn))
-  #Tn = Tn$Tn_list
+  Tn = Tn$Tn_list
   Tn_permute = list()
   
   if(is.null(filelist)){
@@ -96,7 +95,7 @@ sLED_all <- function(X, Y, thred = -Inf, methods = c('Pearson'),
     npermute = length(filelist)
   }
   for(method in names(Tn)){
-    Tn_permute[[method]] = matrix(0, nrow = ntest, ncol = npermute)
+    Tn_permute[[method]] = c()
   }
   for(j in 1:npermute){
     filename = filelist[j]
@@ -114,11 +113,12 @@ sLED_all <- function(X, Y, thred = -Inf, methods = c('Pearson'),
     }
     Tn_permute_list = readRDS(filename)
     Tn_permute_list = Tn_permute_list$Tn_list
-    for(method in names(Tn_permute)){
-      Tn_permute[[method]][, j] <- Tn_permute_list[[method]]
+    for(method in names(Tn)){
+      Tn_permute[[method]][j] <- Tn_permute_list[[method]]
     }
+    
   }
-  pVal_list = sapply(names(Tn), function(method)(rowSums(Tn_permute[[method]] > Tn[[method]])/npermute))
+  pVal_list = sapply(names(Tn), function(method)(mean(Tn_permute[[method]] > Tn[[method]])))
   return(list(pVal = pVal_list, Tn = Tn, Tn_permute = Tn_permute))
 }
 

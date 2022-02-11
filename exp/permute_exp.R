@@ -102,7 +102,7 @@ print(end-st)
 #d = readRDS(paste0('./dat/vel_celltypeL4_50.rds'))
 #genesvel50 = rownames(d[[1]])  
 
-
+# 
 # ans = c()
 # for(k in 1:10){
 #   filename = paste0('./realdat/0.1nowvel_celltypeL23_50_trial',k,'.rds')
@@ -115,14 +115,13 @@ print(end-st)
 #                         pattern=paste0('sledstat_nowvel_celltypeL23_50_aldg_trial',k,'_.*.rds'),
 #                         full.names = TRUE)
 # 
-#   ans[k] = sLED_all(X, Y, npermute=200, methods = c('Pearson', 'aLDG'),
+#   ans = cbind(ans,sLED_all(X, Y, npermute=200, methods = c('Pearson', 'aLDG'),
 #                  thred=0, abs = FALSE, norm = FALSE,
 #                  extrainfo = paste0('nowvel_celltypeL23_50_aldg_trial',k),
-#                  filelist=filelist)$pVal
+#                  filelist=filelist)$pVal)
 # 
-#   print(ans)
 # }
-# 
+# print(ans)
 
 
 # 
