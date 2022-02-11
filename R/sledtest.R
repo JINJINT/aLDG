@@ -28,9 +28,10 @@ getDiffMatrix<-function(X,Y,methods,thred=-Inf,info=0, norm = FALSE, abs = FALSE
   #    plot_cormat(CX, CY, NULL, ord = NULL, dir='./',
   #                ordmethod = NULL,
   #                extrainfo = extrainfo)
+  #    return(list(CX,CY))
   #}
-  return(list(CX,CY))
-  #return(Dhat_list)
+  #
+  return(Dhat_list)
 }
 
 sLED_one <- function(X, Y, nperm, permidx, thred = -Inf, methods = c('pearson'),
@@ -100,16 +101,19 @@ sLED_all <- function(X, Y, thred = -Inf, methods = c('Pearson'),
   for(j in 1:npermute){
     filename = filelist[j]
     if(!file.exists(filename)){
-      Tn_permute_list <- sLEDpermute(Z=Z, n1=n1, n2=n2, rho=rho,thred = thred,
-                                     methods = methods, norm = norm, abs = abs, extrainfo = extrainfo,
-                                     sumabs.seq=sumabs.seq, npermute=npermute, start = start,
-                                     useMC=useMC, mc.cores=mc.cores, seeds=seeds, 
-                                     verbose=verbose, niter=niter, trace=trace)$Tn_permute
+      if (!is.null(seeds)){
+        set.seed(seeds[i])
+      }
+      i.permute <- permuteIndex(n1, n2)
+      Tn_permute_list <- sLED_one(X, Y, j, i.permute, thred = thred, methods = methods,
+                                              norm = norm, abs = abs,
+                                              rho = rho, sumabs.seq=sumabs.seq,
+                                              mc.cores=mc.cores, niter=niter, trace=trace, extrainfo = extrainfo)
       # test statistic, a list of vector, each vector is of sparsity level
       saveRDS(Tn_permute_list, filename)
     }
     Tn_permute_list = readRDS(filename)
-    print(names(Tn_permute))
+    Tn_permute_list = Tn_permute_list$Tn_list
     for(method in names(Tn_permute)){
       Tn_permute[[method]][, j] <- Tn_permute_list[[method]]
     }
@@ -118,108 +122,6 @@ sLED_all <- function(X, Y, thred = -Inf, methods = c('Pearson'),
   return(list(pVal = pVal_list, Tn = Tn, Tn_permute = Tn_permute))
 }
 
-
-
-sLEDpermute <- function(Z, n1, n2, methods=c('pearson'), thred = -Inf, rho=1000,
-                        sumabs.seq=0.2, start = 0, npermute = 100,
-                        useMC=FALSE, mc.cores=120, seeds=NULL,
-                        verbose=TRUE, niter=20, trace=FALSE,
-                        norm = FALSE, abs = FALSE, extrainfo = '',
-                        save = TRUE){
-  
-  permutelist = start+(1:npermute)
-  
-  if(save){
-    lapply(permutelist, sLEDOnePermute, thred = thred, methods=methods,
-           Z=Z, n1=n1, n2=n2, seeds=seeds,
-           sumabs.seq=sumabs.seq, extrainfo = extrainfo,
-           rho=rho, norm = norm, abs = abs,save = save,
-           verbose=verbose, niter=niter, trace=trace)
-    
-  }
-  else{
-    if(useMC){
-      ## try to use multi-core parallelization
-      hasPackage <- requireNamespace("doParallel", quietly = TRUE) && requireNamespace("parallel", quietly = TRUE)
-      if (!hasPackage) {
-        stop("Please install packages 'doParallel' and 'parallel' for multi-core parallelization.
-           Otherwise set useMC=FALSE for non-parallel computation.")
-      }
-      perm.results <- pbmclapply(permutelist, sLEDOnePermute, thred = thred, methods=methods,
-                                 Z=Z, n1=n1, n2=n2, seeds=seeds,
-                                 sumabs.seq=sumabs.seq, extrainfo = extrainfo,
-                                 rho=rho, norm = norm, abs = abs,save = save,
-                                 verbose=verbose, niter=niter, trace=trace,
-                                 mc.cores=mc.cores, mc.preschedule=TRUE)
-    }
-    else{
-      perm.results <- lapply(permutelist, sLEDOnePermute, thred = thred, methods=methods,
-                             Z=Z, n1=n1, n2=n2, seeds=seeds,
-                             sumabs.seq=sumabs.seq, extrainfo = extrainfo,
-                             rho=rho, norm = norm, abs = abs,save = save,
-                             verbose=verbose, niter=niter, trace=trace)
-    }
-    ## extract test statistics and signs
-    ntest <- length(sumabs.seq)
-    
-    Tn_permute = list()
-    Tn_permute_sign = list()
-    
-    for(method in names(perm.results[[1]]$Tn_permute)){
-      Tn_permute[[method]] <- matrix(NA, nrow=ntest, ncol=npermute)
-      Tn_permute_sign[[method]] <- matrix(NA, nrow=ntest, ncol=npermute)
-      for (i in 1:npermute) {
-        Tn_permute[[method]][, i] <- perm.results[[i]]$Tn_permute[[method]]
-        Tn_permute_sign[[method]][, i] <- perm.results[[i]]$Tn_permute_sign[[method]]
-      }
-    }
-    
-    if (verbose) {
-      cat("permutations finished.", fill=TRUE)
-    }
-    return(list(Tn_permute = Tn_permute, Tn_permute_sign = Tn_permute_sign))
-  }
-  
-}
-
-
-sLEDOnePermute <- function(i, Z, n1, n2, thred = thred, methods=c('pearson'),
-                           seeds=NULL, sumabs.seq=0.2, rho=1000,
-                           verbose=TRUE, niter=20, trace=FALSE, ncores = NULL,
-                           norm = FALSE, abs = FALSE,extrainfo = '',save = TRUE){
-  if (!is.null(seeds)){
-    set.seed(seeds[i])
-  }
-  
-  i.permute <- permuteIndex(n1, n2)
-  
-  if(save){
-    getDiffMatrix(X=Z[,i.permute$i1], Y=Z[,i.permute$i2],
-                  methods=methods,thred = thred, info=i,
-                  norm = norm, abs = abs,extrainfo = extrainfo,
-                  save = save)
-  }
-  else{
-    D.permute_list <- getDiffMatrix(X=Z[,i.permute$i1], Y=Z[,i.permute$i2],
-                                    methods=methods,thred = thred, info=i,
-                                    norm = norm, abs = abs,extrainfo = extrainfo,
-                                    save = save)
-    Tn_permute_list = c()
-    Tn_permute_sign_list = c()
-    
-    for(method in names(D.permute_list)){
-      test.permute <- sLEDTestStat(Dmat=D.permute_list[[method]], rho=rho,
-                                   sumabs.seq=sumabs.seq, niter=niter, trace=trace)
-      Tn_permute_list[method]= test.permute$stats
-      Tn_permute_sign_list[method] = test.permute$sign
-    }
-    
-    if (verbose){
-      cat(i, ",")
-    }
-    return(list(Tn_permute = Tn_permute_list, Tn_permute_sign = Tn_permute_sign_list))
-  }
-}
 
 
 sLEDTestStat <- function(Dmat, rho=1000, sumabs.seq=0.2,

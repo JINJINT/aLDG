@@ -7,7 +7,7 @@ experiment_name="permval"
 #  do
     #for i in 1 2 3 4
     #do
-      for s in $(seq 0  200)
+      for s in $(seq 2  200)
       do
         echo "Permutation test of instance "$i", perm batch = "$s
         command="$Rscript ./exp/perm.sh $s"

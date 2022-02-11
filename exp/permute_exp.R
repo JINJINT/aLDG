@@ -90,7 +90,7 @@ run_batch_permutation<-function(nperm){
 # 
 #for(i in 0:200){
 st = Sys.time()
-#run_batch_permutation(i)
+#run_batch_permutation(1)
 run_batch_permutation(as.integer(args[1]))
 end = Sys.time()
 print(end-st)
@@ -107,22 +107,22 @@ print(end-st)
 # for(k in 1:10){
 #   filename = paste0('./realdat/0.1nowvel_celltypeL23_50_trial',k,'.rds')
 #   dat = readRDS(filename)
-#   
+# 
 #   X = log2(dat[[1]]+1)
 #   Y = log2(dat[[2]]+1)
-#   
+# 
 #   filelist = list.files("./dat",
 #                         pattern=paste0('sledstat_nowvel_celltypeL23_50_aldg_trial',k,'_.*.rds'),
 #                         full.names = TRUE)
-#   
+# 
 #   ans[k] = sLED_all(X, Y, npermute=200, methods = c('Pearson', 'aLDG'),
 #                  thred=0, abs = FALSE, norm = FALSE,
 #                  extrainfo = paste0('nowvel_celltypeL23_50_aldg_trial',k),
 #                  filelist=filelist)$pVal
-#   
-#   print(ans)  
+# 
+#   print(ans)
 # }
-
+# 
 
 
 # 
