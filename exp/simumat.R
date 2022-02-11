@@ -1,16 +1,17 @@
-
+library(ESCO)
+library(VineCopula)
 #=============================================================#
 #                   simple low rank mixture model             #
 #=============================================================#
 
-#' @export
+ 
 othn<-function(p,d){
   ot = randortho(p, type = "orthonormal")
   ot = ot[,1:d]
   return(ot)
 }
 
-#' @export
+ 
 randcov<-function(p, sigdim, s, sigma){
   mat = matrix(0,nrow=p,ncol=p)
   U = othn(length(sigdim),s)
@@ -19,7 +20,7 @@ randcov<-function(p, sigdim, s, sigma){
   return(mat)
 }
 
-#' @export
+ 
 mixlowrankmv<-function(n, p, dlist, slist, alphalist, mulist, sigma){
   M = length(dlist)
   dat = matrix(rnorm(n*p, 0, sigma), nrow = p, ncol = n)
@@ -44,7 +45,7 @@ mixlowrankmv<-function(n, p, dlist, slist, alphalist, mulist, sigma){
   return(dat)
 }
 
-#' @export
+ 
 mixlowranksc<-function(n, p, dlist, slist, alphalist,
                  alist, blist,
                  noise_alist, noise_blist,
@@ -210,7 +211,7 @@ mixlowranksc<-function(n, p, dlist, slist, alphalist,
 #=============================================================#
 #                   simple copula one group model             #
 #=============================================================#
-#' @export
+ 
 mixcopula<-function(distrlist=c('norm'), n=100, d = 2,
                  prob = c(0.5, 0.5), corrlist = list(),
                  para1list = list(), para2list = list()){
@@ -234,7 +235,7 @@ mixcopula<-function(distrlist=c('norm'), n=100, d = 2,
 
 
 # simulate one copula group
-#' @export
+ 
 onecopula<-function(Rho, d,n,distr='norm', para1=NULL, para2=NULL){
   if(!is.positive.definite(Rho)){
     cat('input corr matrix is not positive definite, thus doing correction..')
@@ -302,7 +303,7 @@ onecopula<-function(Rho, d,n,distr='norm', para1=NULL, para2=NULL){
 # mulist = c(1,2,3)
 # rlist = c(0.1,0.1,0.1)
 # dlist = list(1:10, 5:15, 10:20)
-#' @export
+ 
 mixkernel <-function(name, alphalist,
                                  mulist, rlist,
                                  n, p, dlist, fixed = TRUE){
@@ -337,7 +338,7 @@ mixkernel <-function(name, alphalist,
   return(data)
 }
 
-#' @export
+ 
 kerdens<-function(name, mu, r){
   if(r<=0) warning("r should be bigger than 0!")
   if(name=="box"){
@@ -353,7 +354,7 @@ kerdens<-function(name, mu, r){
   return(dens_final)
 }
 
-#' @export
+ 
 samp_kerdens <- function(dens, n, xmin=-1, xmax=1, lower = NULL) {
   if(is.null(lower))lower = xmin
 

@@ -1,9 +1,11 @@
+library(ESCO)
+library(VineCopula)
 #=============================================================#
 #                   complex (realistic) single cell model     #
 #=============================================================#
 
 #====== simulate data of subcelltyps defined by different copula
-#' @export
+ 
 mixesco<-function(nc=400, ng=500, plot = TRUE, 
                   nGroups=2, lib.loc = 7, lib.scale = 0.2,
                   mean.shape = 0.3, mean.rate = 0.6,
@@ -113,7 +115,7 @@ mixesco<-function(nc=400, ng=500, plot = TRUE,
               genegroups = genegroups))
 }
 
-#' @export
+ 
 mixesco_examples<-function(type=c('1block', '2block', '3block'), overlap=FALSE){
   # three overlap block cor
   cormat11 = matrix(0,40,40)
@@ -185,7 +187,7 @@ mixesco_examples<-function(type=c('1block', '2block', '3block'), overlap=FALSE){
 }
 
 #==== generate data of tree structure
-#' @export
+ 
 mixtree<-function(nc, ng, Sigma, tree, strong, info='',plot=FALSE){
   true_counts <- SimulateTrueCounts(ncells_total=nc, 
                                     min_popsize=50, 

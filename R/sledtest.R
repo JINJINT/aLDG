@@ -1,4 +1,4 @@
-
+#' @export
 getDiffMatrix<-function(X,Y,methods,thred=-Inf,info=0, norm = FALSE, abs = FALSE,plot=FALSE,extrainfo='',dir='./dat/',ncores=NULL){
   Dhat_list = list()
   if(length(methods)>0){

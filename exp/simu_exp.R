@@ -41,6 +41,9 @@ setwd('~/aLDG')
 devtools::load_all()
 devtools::load_all('./rankPatterns')
 
+source('./exp/simubivar.R')
+source('./exp/plotting.R')
+
 args=(commandArgs(trailingOnly = TRUE))
 
 #' Function to do permutation independence test for simulated data

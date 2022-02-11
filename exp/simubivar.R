@@ -10,7 +10,6 @@
 #' ans = simubi(100,'linear',0.3)
 #' plot(ans$x, ans$y)
 #' @rdname simubi
-#' @export
 simubi<-function(n=300, type='linear', eps=0.3){
   if(type=='linear')dat = mgc.sims.linear(n,1,eps)
   if(type=='exp')dat = mgc.sims.exp(n,1,eps)
@@ -433,7 +432,7 @@ sim_mix<-function(distrlist=c('norm'), n=100, d = 2, prob = c(0.5, 0.5), corrlis
 #' result  <- mgc.sims.linear(n=100, d=10)  # simulate 100 samples in 10 dimensions
 #' X <- result$X; Y <- result$Y
 #' @author Eric Bridgeford
-#' @export
+ 
 mgc.sims.linear <- function(n, d, eps=1, ind=FALSE, a=-1, b=1) {
   xs <- gen.x.unif(n, d, a=a, b=b)
   w <- gen.coefs(d)
@@ -474,7 +473,7 @@ mgc.sims.linear <- function(n, d, eps=1, ind=FALSE, a=-1, b=1) {
 #' result  <- mgc.sims.exp(n=100, d=10)  # simulate 100 samples in 10 dimensions
 #' X <- result$X; Y <- result$Y
 #' @author Eric Bridgeford
-#' @export
+ 
 mgc.sims.exp <- function(n, d, eps=10, ind=FALSE, a=0, b=3) {
   xs <- gen.x.unif(n, d, a=a, b=b)
   w <- gen.coefs(d)
@@ -517,7 +516,6 @@ mgc.sims.exp <- function(n, d, eps=10, ind=FALSE, a=0, b=3) {
 #' result  <- mgc.sims.cubic(n=100, d=10)  # simulate 100 samples in 10 dimensions
 #' X <- result$X; Y <- result$Y
 #' @author Eric Bridgeford
-#' @export
 mgc.sims.cubic <- function(n, d, eps=80, ind=FALSE, a=-1, b=1, c.coef=c(-12, 48, 128), s=1/3) {
   xs <- gen.x.unif(n, d, a=a, b=b)
   w <- gen.coefs(d)
@@ -560,7 +558,7 @@ mgc.sims.cubic <- function(n, d, eps=80, ind=FALSE, a=-1, b=1, c.coef=c(-12, 48,
 #' result  <- mgc.sims.joint(n=100, d=10)  # simulate 100 samples in 10 dimensions
 #' X <- result$X; Y <- result$Y
 #' @author Eric Bridgeford
-#' @export
+ 
 mgc.sims.joint <- function(n, d, eps=0.5) {
   nu <- rnorm(n, mean=0, sd=1)  # gaussian noise
   kappa <- as.numeric(d == 1)
@@ -605,7 +603,7 @@ mgc.sims.joint <- function(n, d, eps=0.5) {
 #' result  <- mgc.sims.step(n=100, d=10)  # simulate 100 samples in 10 dimensions
 #' X <- result$X; Y <- result$Y
 #' @author Eric Bridgeford
-#' @export
+ 
 mgc.sims.step <- function(n, d, eps=1, ind=FALSE, a=-1, b=1) {
   xs <- gen.x.unif(n, d, a=a, b=b)
   w <- gen.coefs(d)
@@ -649,7 +647,7 @@ mgc.sims.step <- function(n, d, eps=1, ind=FALSE, a=-1, b=1) {
 #' result  <- mgc.sims.quad(n=100, d=10)  # simulate 100 samples in 10 dimensions
 #' X <- result$X; Y <- result$Y
 #' @author Eric Bridgeford
-#' @export
+ 
 mgc.sims.quad <- function(n, d, eps=0.5, ind=FALSE, a=-1, b=1) {
   xs <- gen.x.unif(n, d, a=a, b=b)
   w <- gen.coefs(d)
@@ -747,7 +745,7 @@ mgc.sims.log <- function(n, d, pirod = 1, eps=0.5, ind=FALSE, a=-1, b=1) {
 #' result  <- mgc.sims.wshape(n=100, d=10)  # simulate 100 samples in 10 dimensions
 #' X <- result$X; Y <- result$Y
 #' @author Eric Bridgeford
-#' @export
+ 
 mgc.sims.wshape <- function(n, d, eps=0.5, ind=FALSE, a=-1, b=1) {
   x <- gen.x.unif(n, d, a=a, b=b)
   u <- gen.x.unif(n, d, a=a, b=b)
@@ -791,7 +789,7 @@ mgc.sims.wshape <- function(n, d, eps=0.5, ind=FALSE, a=-1, b=1) {
 #' result  <- mgc.sims.spiral(n=100, d=10)  # simulate 100 samples in 10 dimensions
 #' X <- result$X; Y <- result$Y
 #' @author Eric Bridgeford
-#' @export
+ 
 mgc.sims.spiral <- function(n, d, eps=0.4, a=0, b=5) {
   u <- gen.x.unif(n, 1, a=a, b=b)
   x <- array(cos(pi*u), dim=c(n, d))
@@ -875,7 +873,7 @@ mgc.sims.square <- function(n, d, eps=0.05, a=-1, b=1, period=-pi/8) {
 #' result  <- mgc.sims.ubern(n=100, d=10)  # simulate 100 samples in 10 dimensions
 #' X <- result$X; Y <- result$Y
 #' @author Eric Bridgeford
-#' @export
+ 
 mgc.sims.ubern <- function(n, d, eps=0.5, p=0.5) {
   U = rbinom(n=n, size=1, prob=p)
   nu_e1 <- mvrnorm(n=n, mu = array(0, dim=c(d, 1)), Sigma = diag(d))  # gaussian noise
@@ -928,7 +926,7 @@ mgc.sims.indep <- function(n, d, prob=0.5, sep1=1,sep2=2) {
 #' of k/sum(K) for k=1:K. Defaults to \code{TRUE}.
 #' @param ind whether to sample x and y independently. Defaults to \code{FALSE}.
 #' @author Eric Bridgeford
-#' @export
+ 
 discr.sims.linear <- function(n, d, K, signal.scale=1, signal.lshift=1, non.scale=1, rotate=FALSE, class.equal=TRUE, ind=FALSE) {
   priors <- gen.sample.labels(K, class.equal=class.equal)
   S <- diag(d)
@@ -974,7 +972,7 @@ discr.sims.linear <- function(n, d, K, signal.scale=1, signal.lshift=1, non.scal
 #' of k/sum(K) for k=1:K. Defaults to \code{TRUE}.
 #' @param ind whether to sample x and y independently. Defaults to \code{FALSE}.
 #' @author Eric Bridgeford
-#' @export
+ 
 discr.sims.exp <- function(n, d, K, signal.scale=1, signal.lshift=1, non.scale=1, rotate=FALSE, class.equal=TRUE, ind=FALSE) {
   priors <- gen.sample.labels(K, class.equal=class.equal)
   S <- diag(d)
@@ -1021,7 +1019,7 @@ discr.sims.exp <- function(n, d, K, signal.scale=1, signal.lshift=1, non.scale=1
 #' library(mgc)
 #' sim <- discr.sims.fat_tails(100, 3, 2)
 #' @author Eric Bridgeford
-#' @export
+ 
 discr.sims.fat_tails <- function(n, d, K, signal.scale=1, rotate=FALSE, class.equal=TRUE, ind=FALSE) {
   priors <- gen.sample.labels(K, class.equal=class.equal)
   S <- signal.scale*diag(d)
@@ -1069,7 +1067,7 @@ discr.sims.fat_tails <- function(n, d, K, signal.scale=1, rotate=FALSE, class.eq
 #' library(mgc)
 #' sim <- discr.sims.cross(100, 3, 2)
 #' @author Eric Bridgeford
-#' @export
+ 
 discr.sims.cross <- function(n, d, K, signal.scale=10, non.scale=1, mean.scale=0,
                              rotate=FALSE, class.equal=TRUE, ind=FALSE) {
   priors <- gen.sample.labels(K, class.equal=class.equal)
@@ -1123,7 +1121,7 @@ discr.sims.cross <- function(n, d, K, signal.scale=10, non.scale=1, mean.scale=0
 #' library(mgc)
 #' sim <- discr.sims.radial(100, 3, 2)
 #' @author Eric Bridgeford
-#' @export
+ 
 discr.sims.radial <- function(n, d, K, er.scale=0.1, r=1, class.equal=TRUE, ind=FALSE) {
   priors <- gen.sample.labels(K, class.equal=class.equal)
   
@@ -1278,7 +1276,7 @@ mgc.sims.random_rotate <- function(mus, Sigmas, Q=NULL) {
 #' # sample 100 points from 3-d 2-ball with radius 2
 #' X <- mgc.sims.2ball(100, 3, 2)
 #' @author Eric Bridgeford
-#' @export
+ 
 mgc.sims.2ball <- function(n, d, r=1, cov.scale=0) {
   Y <- matrix(mvrnorm(n=n, mu=array(0, dim=c(d, 1)), Sigma=diag(d)), nrow=n)
   u <- runif(n)
@@ -1303,7 +1301,7 @@ mgc.sims.2ball <- function(n, d, r=1, cov.scale=0) {
 #' # sample 100 points from 3-d 2-sphere with radius 2
 #' X <- mgc.sims.2sphere(100, 3, 2)
 #' @author Eric Bridgeford
-#' @export
+ 
 mgc.sims.2sphere <- function(n, d, r, cov.scale=0) {
   u <- matrix(mvrnorm(n=n, mu=array(0, dim=c(d,1)), Sigma=diag(d)), nrow=n)
   unorm <- diag(sqrt(apply(u^2, 1, sum)))

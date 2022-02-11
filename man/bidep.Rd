@@ -60,6 +60,10 @@ sx = list(rank = vector of value rank, dist = matrix of pairwise distance)}
 
 \item{qd:}{(aLDG specific parameters) the quantile window to compute the adaptive bandwidth \eqn{h_x = sd(x(qd))}}
 
+\item{opt:}{(aLDG specific parameters) for 'fix' bandwidth calculation,
+if TRUE, we use the theoretical optimal rate \eqn{h_n = sd(x) n^{-1/6}};
+if FALSE, we use \eqn{h_n = sd}}
+
 \item{stat:}{(aLDG specific parameters) what statistics to use for \eqn{T_i} in aLDG}
 
 \item{cutoff:}{(aLDG specific parameters) the coef c in threshold choice for aLDG:

@@ -1,4 +1,19 @@
-#' @export
+packlist = c("ggplot2",
+             "cowplot",
+             "ggpubr",
+             "ggExtra",
+             "tidyverse",
+             "latex2exp",
+             "reshape2",
+             "NMF",
+             "pheatmap",
+             "gridExtra",
+             "rgl",
+             "ggfortify")
+
+lapply(packlist, require, character.only = TRUE)
+
+
 plot_cormat<-function(cormat_x, cormat_y, pval, extrainfo='', dir='./',ord = NULL, ordmethod = 'pearson'){
 
   if(is.null(ord)){
@@ -60,7 +75,7 @@ plot_cormat<-function(cormat_x, cormat_y, pval, extrainfo='', dir='./',ord = NUL
   dev.off()
 }
 
-#' @export
+
 plot_cormatsingle<-function(cormat_x, geneinfo = NULL, extrainfo='', dir='./',ord = NULL, ordmethod = NULL){
 
   if(is.null(ord) & (!is.null(ordmethod))){
@@ -122,7 +137,6 @@ plot_cormatsingle<-function(cormat_x, geneinfo = NULL, extrainfo='', dir='./',or
 }
 
 
-#' @export
 plot2d<-function(x, y, index, info = NULL, corr = NULL, extra = NULL,
                  type=NULL, plotdir = './plots'){
   if(!dir.exists(plotdir))dir.create(plotdir)
@@ -255,7 +269,6 @@ plot2d<-function(x, y, index, info = NULL, corr = NULL, extra = NULL,
     }
 }
 
-#' @export
 plot2dsingle<-function(x, y, xlab, ylab, color = NULL, extra = NULL, type=NULL, title=NULL,info=NULL){
   if(is.null(color)){
     df = data.frame(x=x, y=y)
