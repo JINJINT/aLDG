@@ -14,34 +14,17 @@ packlist=c("pbmcapply",
     "SC3",
     "TauStar",
     "Hmisc",
-    "mvtnorm",
-    "ggplot2",
-    "cowplot",
-    "ggpubr",
-    "ggExtra",
-    "tidyverse",
-    "latex2exp",
-    "reshape2",
-    "NMF",
-    "pheatmap",
-    "gridExtra",
-    "rgl",
-    "ggfortify",
     "grid",
     "stats", 
     "matrixcalc",
-    "VineCopula",
-    "ESCO",
     "pracma",
     "MASS",
-    "abind",
-    "HHG")
+    "abind")
 lapply(packlist, require, character.only = TRUE)
 setwd('~/aLDG')
 devtools::load_all()
 devtools::load_all('./rankPatterns')
 
-source('./exp/simubivar.R')
 source('./exp/plotting.R')
 
 args=(commandArgs(trailingOnly = TRUE))

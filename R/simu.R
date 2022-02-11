@@ -10,6 +10,7 @@
 #' ans = simubi(100,'linear',0.3)
 #' plot(ans$x, ans$y)
 #' @rdname simubi
+#' @export
 simubi<-function(n=300, type='linear', eps=0.3){
   if(type=='linear')dat = mgc.sims.linear(n,1,eps)
   if(type=='exp')dat = mgc.sims.exp(n,1,eps)

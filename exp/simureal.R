@@ -1,5 +1,6 @@
 library(ESCO)
 library(VineCopula)
+library(SC3)
 #=============================================================#
 #                   complex (realistic) single cell model     #
 #=============================================================#
