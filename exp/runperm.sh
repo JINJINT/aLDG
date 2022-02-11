@@ -10,7 +10,7 @@ experiment_name="permval"
       for s in $(seq 1 2)
       do
         echo "Permutation test of instance "$i", perm batch = "$s
-        command="$Rscript ~/aLDG/exp/perm.sh $s"
+        command="$Rscript ./exp/perm.sh $s"
         sbatch --time=00:30:00 -p RM-shared -N 1 -n 1 -J $experiment_name $command
       done
     #done
