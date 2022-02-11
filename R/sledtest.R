@@ -56,7 +56,7 @@ sLED_one <- function(X, Y, nperm, permidx, thred = -Inf, methods = c('pearson'),
 }
 
 
-sLED_all <- function(X, Y, thred = -Inf, methods = c('pearson'),
+sLED_all <- function(X, Y, thred = -Inf, methods = c('Pearson'),
                      norm = TRUE, abs = TRUE,
                      rho=1000, sumabs.seq=0.2, start = 0, npermute=100,
                      useMC=FALSE, mc.cores=100, seeds=NULL, verbose=TRUE,
@@ -106,7 +106,7 @@ sLED_all <- function(X, Y, thred = -Inf, methods = c('pearson'),
                                      useMC=useMC, mc.cores=mc.cores, seeds=seeds, 
                                      verbose=verbose, niter=niter, trace=trace)$Tn_permute
       # test statistic, a list of vector, each vector is of sparsity level
-      saveRDS(Tn_permute_list$Tn_list, filename)
+      saveRDS(Tn_permute_list, filename)
     }
     Tn_permute_list = readRDS(filename)
     print(names(Tn_permute))
