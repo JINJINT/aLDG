@@ -319,11 +319,14 @@ aldg<-function(x, y, sx = NULL, sy = NULL,
          Tvec = renull[[1]][[band]]
          sTvec = sort(Tvec)
          sTvec = sTvec[which(sTvec>0)]
-         s1gapvec = sTvec[1:(length(sTvec)-2)]-sTvec[2:(length(sTvec)-1)]
-         s2gapvec = sTvec[2:(length(sTvec)-1)]-sTvec[3:(length(sTvec))]
-         sgapvec = s2gapvec-s1gapvec
-         nstar = localMaxima(sgapvec)
-         tlist[i] = max(sTvec[nstar])
+         if(length(sTvec)<5)tlist[i]=NA
+         else{
+           s1gapvec = sTvec[1:(length(sTvec)-2)]-sTvec[2:(length(sTvec)-1)]
+           s2gapvec = sTvec[2:(length(sTvec)-1)]-sTvec[3:(length(sTvec))]
+           sgapvec = s2gapvec-s1gapvec
+           nstar = localMaxima(sgapvec)
+           tlist[i] = max(sTvec[nstar])
+         }
       }
     }else{
       re = ldgsingle(xt, yt, NULL,
