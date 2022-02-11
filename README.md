@@ -19,12 +19,17 @@ library(aLDG)
 
 #===== bivariate dependence measure ======#
 x = rnorm(100)
-anslinear = bidep(x, x + rnorm(100,0,0.1) ,methods=c('pearson','taustar','hsic','dcor','aldg')) # compute for selected methods
-ansquad = bidep(x, x^2 + rnorm(100,0,0.1) ,methods=c('pearson','taustar','hsic','dcor','aldg')) # compute for selected methods
+ansindep = bidep(x, rnorm(length(x),0,0.1) ,methods=c('Pearson','TauStar','HSIC','dCor','aLDG')) # independence
+ansindep
+anslinear = bidep(x, x + rnorm(length(x),0,0.1) ,methods=c('Pearson','TauStar','HSIC','dCor','aLDG')) # linear
+anslinear
+ansquad = bidep(x, x^2 + rnorm(length(x),0.1) ,methods=c('Pearson','TauStar','HSIC','dCor','aLDG')) # nonlinear
+ansquad
 
 #===== pairwise dependence matrix for multivariate data ======#
-dat = matrix(rnorm(100),5,20)
-ans = matdep(dat,methods=c('pearson','taustar','hsic','dcor','aldg')), ncores=NULL) # compute for selected methods
+dat = matrix(rnorm(1000),5,200)
+ans = matdep(dat,methods=c('Pearson','TauStar','HSIC','dCor','aLDG'), ncores=NULL) # multivariate normal
+ans
 ```
 
 ## Reference:

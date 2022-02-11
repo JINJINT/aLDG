@@ -275,7 +275,7 @@ matdep<-function(data, methods=NULL,
 aldg<-function(x, y, sx = NULL, sy = NULL,
                thred=-Inf, hx=NULL, hy=NULL, band = 'fix',
                wd = 1, qd = 0.1, opt = TRUE, 
-               stat = 'normgap', cutoff = 1,trials=5){
+               stat = 'normgap', cutoff = 1,trials=10){
   
   n = length(x)
   
