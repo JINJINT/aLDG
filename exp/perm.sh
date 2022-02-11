@@ -1,3 +1,3 @@
 #!/bin/bash
 
-Rscript ./permute_exp.R $1
+Rscript ~/aLDG/exp/permute_exp.R $1
