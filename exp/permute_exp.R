@@ -21,7 +21,6 @@ packlist=c("pbmcapply",
 lapply(packlist, require, character.only = TRUE)
 setwd('~/aLDG')
 devtools::load_all()
-devtools::load_all('./rankPatterns')
 
 args=(commandArgs(trailingOnly = TRUE))
 
