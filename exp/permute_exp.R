@@ -112,12 +112,12 @@ for(k in 1:10){
   Y = log2(dat[[2]]+1)
 
   filelist = list.files("./dat",
-                        pattern=paste0('sledstat_nowvel_celltypeL23_50_aldgwd0.5_trial',k,'_.*.rds'),
+                        pattern=paste0('sledstat_nowvel_celltypeL23_50_aldg_trial',k,'_.*.rds'),
                         full.names = TRUE)
-
+  print(length(filelist))
   ans = cbind(ans,sLED_all(X, Y, npermute=200, methods = c('Pearson', 'aLDG'),
                  thred=0, abs = FALSE, norm = FALSE,
-                 extrainfo = paste0('nowvel_celltypeL23_50_aldgwd0.5_trial',k),
+                 extrainfo = paste0('nowvel_celltypeL23_50_aldg_trial',k),
                  filelist=filelist)$pVal)
 
 }

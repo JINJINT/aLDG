@@ -62,8 +62,8 @@ pairperm<-function(n=300, alpha=0.05, eps=0.3, nperm =200, ncores=10,
     typelist = c('indep','linear',
                  'step','ubern','circle','spiral',
                  'quad','wshape','diamond','multi',
-                 'gauss30','gauss31','gauss32','gauss33')
-                 #'nb30','nb31','nb32','nb33')
+                 'gauss30','gauss31','gauss32','gauss33',
+                 'nb30','nb31','nb32','nb33')
     methods = c('Pearson','Spearman','Kendall','TauStar','dCor','HSIC','HoeffD','MIC','MRank','aLDG')
   }
   #if(n>300){
@@ -101,7 +101,7 @@ pairperm<-function(n=300, alpha=0.05, eps=0.3, nperm =200, ncores=10,
         bound=-Inf
         if(grepl('nb', type, fixed = TRUE))bound=0
         result = bidep(x, y, thred=bound, methods = c("aLDG"), wd=wd)
-        re[['val']][['aLDG']] = result[['val']]
+        re[['val']][['aLDG']] = result[['aLDG']]
         if(nperm>0){
           nulls <- mclapply(1:nperm, function(i){
             per <- sample(n)  # resample the IDs for Y
@@ -132,9 +132,9 @@ dir.create('./dat')
 
 # one trial of 200 permutation
 simu_pair<-function(i){
-  for(n in c(50,100,150,200)){ # j as sample size
+  for(n in c(50,75,100,125,150,200)){ # j as sample size
     cat(paste0('trial ',i, ', sample size ',n,'\n'))
-    pairperm(n=n, nperm = 200, ncores = 10, wd=1, cutoff=1, band='fix', rerun_aldg = FALSE,
+    pairperm(n=n, nperm = 200, ncores = 10, wd=1, cutoff=1, band='fix', rerun_aldg = TRUE,
              filename = paste0('./dat/permpair_m',i))
   }
 }
@@ -147,7 +147,7 @@ time.taken <- end.time - start.time
 print(time.taken)
 
 # 20 independent trials
-for(i in 1:20){
+for(i in 1:50){
   simu_pair(i)
 }
 
@@ -164,14 +164,14 @@ typelist = c('indep','linear',
 
 methods = c('Pearson','Spearman','Kendall','TauStar','dCor','HSIC','HoeffD','MIC','MRank','aLDG')
 for(type in typelist){
-  nlist = c(50,100,150,200)
+  nlist = c(50,75,100,125,150,200)
   #nlist = c(100)
   powmean[[type]] = matrix(0,length(nlist),length(methods))
   valmean[[type]] = matrix(0,length(nlist),length(methods))
   for(n in 1:length(nlist)){
     power = c()
     val = c()
-    for(i in 1:20){
+    for(i in 1:50){
       print(paste0(type, ', n ',nlist[n], ', i',i))
       ans = pairperm(n=nlist[n], eps=0.3, nperm=200, typelist = c(type), methods=methods,
                      all=FALSE, filename=paste0('./dat/permpair_m',i))
@@ -216,13 +216,13 @@ for(i in 1:length(typelist)){
 }
 ml=marrangeGrob(grobs = tmp_list, nrow = 3, ncol=6,
                 layout_matrix = matrix(1:18, 3, 6, TRUE))
-ggsave("./plots/bipower.pdf", ml, width=11, height=6)
+ggsave("./plots/newbipower.pdf", ml, width=11, height=6)
 
 # plot value
 tmp_list = list()
 for(i in 1:length(typelist)){
   dat = data.frame(methods = factor(methods, levels=methods), 
-                   value = valmean[[typelist[i]]][4,])
+                   value = valmean[[typelist[i]]][3,])
   dat[is.na(dat)]=0
   mat = melt(dat)
   alpha=1
@@ -252,7 +252,7 @@ ml=ggarrange(plotlist = tmp_list,
              nrow = 3, ncol=6,
              legend = 'none',
              common.legend =TRUE)
-ggsave("./plots/value.pdf", ml, width=11, height=6)
+ggsave("./plots/newvalue.pdf", ml, width=11, height=6)
 
 
 # plot mono

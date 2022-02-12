@@ -275,7 +275,7 @@ matdep<-function(data, methods=NULL,
 aldg<-function(x, y, sx = NULL, sy = NULL,
                thred=-Inf, hx=NULL, hy=NULL, band = 'fix',
                wd = 1, qd = 0.1, opt = TRUE, 
-               stat = 'normgap', cutoff = 1,trials=10){
+               stat = 'normgap', cutoff = 1, trials=20){
   
   n = length(x)
   
@@ -326,6 +326,7 @@ aldg<-function(x, y, sx = NULL, sy = NULL,
            sgapvec = s2gapvec-s1gapvec
            nstar = localMaxima(sgapvec)
            tlist[i] = max(sTvec[nstar])
+           if(tlist[i]==-Inf)tlist[i]=NA
          }
       }
     }else{
@@ -353,6 +354,7 @@ aldg<-function(x, y, sx = NULL, sy = NULL,
           sgapvec = s2gapvec-s1gapvec
           nstar = localMaxima(sgapvec)
           tlist[i] = max(sTvec[nstar])
+          if(tlist[i]==-Inf)tlist[i]=NA
         }
       }
     }
@@ -365,11 +367,11 @@ aldg<-function(x, y, sx = NULL, sy = NULL,
       #if(stat=='probnormgap'){
       #  t =qnorm(1-1/(nt)^cutoff)
       #}
-      t = median(tlist,na.rm = TRUE)
+      t = quantile(tlist, probs = 0.95, na.rm = TRUE)
       if(is.na(t))t=qnorm(1-1/(nt)^cutoff)/nt^(1/3)
     }
     result[id] = re[[1]][[band]]
-    return(list(val =mean(result>t),Tvec = result))
+    return(list(val = mean(result>t), Tvec = result))
   }else{
     return(list(val =0, Tvec = NULL))
   }

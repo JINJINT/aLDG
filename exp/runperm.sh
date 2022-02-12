@@ -11,7 +11,7 @@ experiment_name="permval"
       do
         echo "Permutation test of instance "$i", perm batch = "$s
         command="$Rscript ./exp/perm.sh $s"
-        sbatch --time=01:00:00 -p RM-shared -N 1 -n 1 -J $experiment_name $command
+        sbatch --time=02:00:00 -p RM-shared -N 1 -n 1 -J $experiment_name $command
       done
     #done
 # done
