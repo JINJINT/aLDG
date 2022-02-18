@@ -13,7 +13,7 @@ devtools::install_github("JINJINT/aLDG")
 
 ## Quick start:
 
-For a simple example to simulate 100 genes and 50 cells of one cell group with gene co-expression:
+Simple examples:
 ```{r}
 library(aLDG)
 
@@ -28,10 +28,11 @@ ansquad
 
 #===== pairwise dependence matrix for multivariate data ======#
 dat = matrix(rnorm(1000),5,200)
-ans = matdep(dat,methods=c('Pearson','TauStar','HSIC','dCor','aLDG'), ncores=NULL) # multivariate normal
+ans = matdep(dat,methods=c('Pearson','TauStar','HSIC','dCor','aLDG'), ncores=NULL) # multivariate independent normal
 ans
 ```
 
 ## Reference:
 Check out our paper for aLDG here:
-[From local to global gene co-expression estimation using single-cell RNA-seq data.](to be submitted)
+
+From local to global gene co-expression estimation using single-cell RNA-seq data.(to be submitted)
