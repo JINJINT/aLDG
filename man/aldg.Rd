@@ -12,13 +12,11 @@ aldg(
   thred = -Inf,
   hx = NULL,
   hy = NULL,
-  band = "fix",
   wd = 1,
-  qd = 0.1,
-  opt = TRUE,
-  stat = "normgap",
   cutoff = 1,
-  trials = 10
+  chooset = "inflect",
+  mise = FALSE,
+  trials = 5
 )
 }
 \arguments{

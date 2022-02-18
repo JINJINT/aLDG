@@ -146,7 +146,7 @@ valmean = list()
 typelist = c(#'indep','linear',
              #'step','ubern','circle','spiral',
              #'quad','wshape','diamond','multi',
-             #'gauss30','gauss31','gauss32','gauss33',
+             'gauss30','gauss31','gauss32','gauss33',
              'nb30','nb31','nb32','nb33')
 
 methods = c('Pearson','Spearman','Kendall','TauStar','dCor','HSIC','HoeffD','MIC','MRank',
@@ -168,7 +168,7 @@ for(type in typelist){
         ans = pairperm(n=nlist[n], eps=0.3, nperm=200, typelist = c(type), 
                      methods=c('Pearson','Spearman','Kendall','TauStar','dCor','HSIC','HoeffD','MIC','MRank','aLDG'),
                      rerunmethods = c(),
-                     all=FALSE, filename=paste0('./dat/permpairmixneg_m',i))
+                     all=FALSE, filename=paste0('./dat/permpairmix_m',i))
       #}
       val = rbind(val,ans[['val']][methods])
       power = rbind(power, ans[['rej']][methods])
