@@ -97,14 +97,15 @@ sims.gaussmix<-function(n,k,s){
     sig2 = c(1,1)
     sig3 = c(1,1)
     corvec = rep(0,k)
-    if(s>0)corvec[1:s] = 0.8
+    if(s>0)corvec[1:s] = -0.8
+    if(s==3)corvec[3] = 0.8
     corr1 = matrix(c(1,corvec[1],corvec[1],1),nrow = 2)
     corr2 = matrix(c(1,corvec[2],corvec[2],1),nrow = 2)
     corr3 = matrix(c(1,corvec[3],corvec[3],1),nrow = 2)
     para1list = list(mean1, mean2, mean3)
     para2list = list(sig1, sig2, sig3)
     corrlist = list(corr1, corr2, corr3)
-    p = c(0.1,0.1,0.8)
+    p = c(0.2,0.1,0.7)
   }
   if(k==4){
     mean1 = c(3,3)
@@ -137,21 +138,22 @@ sims.gaussmix<-function(n,k,s){
 
 sims.nbmix<-function(n, k, s){
   if(k==3){
-    mean1 = c(20,20)
+    mean1 = c(20,30)
     mean2 = c(1,3)
     mean3 = c(3,1)
     sig1 = c(100,100)
     sig2 = c(1,1)
     sig3 = c(1,1)
     corvec = rep(0,k)
-    if(s>0)corvec[1:s] = 0.8
+    if(s>0)corvec[1:s] = -0.8
+    if(s>1)corvec[2:s] = 0.8
     corr1 = matrix(c(1,corvec[1],corvec[1],1),nrow = 2)
     corr2 = matrix(c(1,corvec[2],corvec[2],1),nrow = 2)
     corr3 = matrix(c(1,corvec[3],corvec[3],1),nrow = 2)
     para1list = list(mean1, mean2, mean3)
     para2list = list(sig1, sig2, sig3)
     corrlist = list(corr1, corr2, corr3)
-    p = c(0.1,0.4,0.5)
+    p = c(0.1,0.45,0.45)
   }
   if(k==4){
     mean1 = c(10,20)
@@ -174,7 +176,7 @@ sims.nbmix<-function(n, k, s){
     p = c(0.25,0.25,0.25,0.25)
   }
   
-  data_nb = sim_mix(distrlist=c('nbinom','nbinom','nbinom','nbinom'), 
+  data_nb = sim_mix(distrlist=rep('nbinom',4), 
                     n=n, d = 2, prob = p, corrlist = corrlist, 
                     para1list = para1list, para2list = para2list)
   dat_nb = data_nb[[1]]

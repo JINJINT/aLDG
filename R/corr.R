@@ -89,10 +89,9 @@ bidep<-function(x, y, sx = NULL, sy = NULL, methods=NULL, all = FALSE,
       corr[method]=incSubseq(x,y,k=5)/choose(n,5)
     }
     if(method=='aLDG'){
-      corr[method]=aldg(x, y, sx = sx, sy = sy,
-                        thred = thred, hx = hx, hy = hy, band = band,
-                        wd = wd, qd =qd, opt = opt, 
-                        stat = stat, cutoff = cutoff)$val
+      ans=aldg(x, y, sx = sx, sy = sy, thred = thred, wd = wd, 
+                        mise=FALSE,trials=max(floor(1000/n),5), chooset = 'inflect')
+      corr[method] = ans$val 
     }
   }
   return(corr)
@@ -121,10 +120,8 @@ bidep<-function(x, y, sx = NULL, sy = NULL, methods=NULL, all = FALSE,
 #' @export
 matdep<-function(data, methods=NULL, 
                           all = FALSE,
-                          thred = -Inf, cutoff = 1,
-                          wd = 1, qd = 0.1,  
-                          opt=TRUE, band = 'fix',
-                          stat = 'normgap',
+                          thred = -Inf, 
+                          wd = 1, 
                           trial = 0,
                           ncores=NULL, 
                           norm = FALSE, abs = FALSE,
@@ -183,9 +180,8 @@ matdep<-function(data, methods=NULL,
       y = data[j,]
       sx = sortlist[[i]]
       sy = sortlist[[j]]
-      allvec = bidep(x, y, sx=sx, sy=sy,  wd = wd, qd = qd, 
-                            opt = opt, band=band, stat=stat, 
-                            thred=thred, methods = methods, cutoff=cutoff)
+      allvec = bidep(x, y, sx=sx, sy=sy,  wd = wd,  
+                            thred=thred, methods = methods)
       return(allvec)
     }
     
@@ -273,9 +269,9 @@ matdep<-function(data, methods=NULL,
 #' @rdname aldg
 #' @export
 aldg<-function(x, y, sx = NULL, sy = NULL,
-               thred=-Inf, hx=NULL, hy=NULL, band = 'fix',
-               wd = 1, qd = 0.1, opt = TRUE, 
-               stat = 'normgap', cutoff = 1, trials=20){
+               thred = -Inf, hx=NULL, hy=NULL, 
+               wd = 1,  cutoff = 1, chooset = 'inflect',
+               mise = FALSE, trials=5){
   
   n = length(x)
   
@@ -287,7 +283,8 @@ aldg<-function(x, y, sx = NULL, sy = NULL,
   }else{
     id = 1:n
   }
-  tlist = c()
+  tinflectlist = c()
+  tmiselist = c()
   nt = length(id)
   if(nt>10){
     xt = x[id]
@@ -299,81 +296,87 @@ aldg<-function(x, y, sx = NULL, sy = NULL,
       rx = rx[which(rx %in% rid)]-(n-nt)
       ry = sy[['rank']]
       ry = ry[which(ry %in% rid)]-(n-nt)
-      re = ldgsingle(xt, yt, NULL,
+      re = ldgsingle(xt, yt, 
                      rx=rx,
                      ry=ry,
                      dx=sx[['dist']][rid,rid],
                      dy=sy[['dist']][rid,rid],
                      hx=hx, hy=hy,
                      wd=wd, kernel = 'box',
-                     bandlist = c(band),
-                     chooset = FALSE,
-                     stat = stat, opt=opt)
-      for(i in 1:trials){
-         renull = ldgsingle(xt, yt[sample(1:nt,nt)], NULL,
-                         hx=hx, hy=hy,
-                         wd=wd, kernel = 'box',
-                         bandlist = c(band),
-                         chooset = FALSE,
-                         stat = stat, opt=opt)
-         Tvec = renull[[1]][[band]]
-         sTvec = sort(Tvec)
-         sTvec = sTvec[which(sTvec>0)]
-         if(length(sTvec)<5)tlist[i]=NA
-         else{
-           s1gapvec = sTvec[1:(length(sTvec)-2)]-sTvec[2:(length(sTvec)-1)]
-           s2gapvec = sTvec[2:(length(sTvec)-1)]-sTvec[3:(length(sTvec))]
-           sgapvec = s2gapvec-s1gapvec
-           nstar = localMaxima(sgapvec)
-           tlist[i] = max(sTvec[nstar])
-           if(tlist[i]==-Inf)tlist[i]=NA
-         }
+                     bandlist = c('fix'),
+                     chooset = mise,
+                     stat = 'normgap', opt=TRUE)
+      t_miseold = re[[2]]
+      if(trials>0){
+        for(i in 1:trials){
+          renull = ldgsingle(xt, yt[sample(1:nt,nt)], 
+                             hx=hx, hy=hy,
+                             wd=wd, kernel = 'box',
+                             bandlist = c('fix'),
+                             chooset = FALSE,
+                             stat = 'normgap', opt=TRUE)
+          Tvec = renull[[1]][['fix']]
+          tmiselist[i] = max(Tvec)
+          sTvec = sort(Tvec)
+          sTvec = sTvec[which(sTvec>0)]
+          if(length(sTvec)<5)tinfectlist[i]=NA
+          else{
+            s1gapvec = sTvec[1:(length(sTvec)-2)]-sTvec[2:(length(sTvec)-1)]
+            s2gapvec = sTvec[2:(length(sTvec)-1)]-sTvec[3:(length(sTvec))]
+            sgapvec = s2gapvec-s1gapvec
+            nstar = localMaxima(sgapvec)
+            tinflectlist[i] = max(sTvec[nstar])
+            if(tinflectlist[i]==-Inf)tinflectlist[i]=NA
+          }
+        }
       }
     }else{
-      re = ldgsingle(xt, yt, NULL,
+      re = ldgsingle(xt, yt, 
                      hx=hx, hy=hy,
                      wd=wd, kernel = 'box',
-                     bandlist = c(band),
-                     chooset = FALSE,
-                     stat = stat,opt=opt)
-      for(i in 1:trials){
-        renull = ldgsingle(xt, yt[sample(1:nt,nt)], NULL,
-                           hx=hx, hy=hy,
-                           wd=wd, kernel = 'box',
-                           bandlist = c(band),
-                           chooset = FALSE,
-                           stat = stat,opt=opt)
-        Tvec = renull[[1]][[band]]
-        Tvec = Tvec[!is.na(Tvec)]
-        sTvec = sort(Tvec)
-        sTvec = sTvec[which(sTvec>0)]
-        if(length(sTvec)<5)tlist[i]=NA
-        else{
-          s1gapvec = sTvec[1:(length(sTvec)-2)]-sTvec[2:(length(sTvec)-1)]
-          s2gapvec = sTvec[2:(length(sTvec)-1)]-sTvec[3:(length(sTvec))]
-          sgapvec = s2gapvec-s1gapvec
-          nstar = localMaxima(sgapvec)
-          tlist[i] = max(sTvec[nstar])
-          if(tlist[i]==-Inf)tlist[i]=NA
+                     bandlist = c('fix'),
+                     chooset = mise,
+                     stat = 'normgap', opt=TRUE)
+      t_miseold = re[[2]]
+      if(trials>0){
+        for(i in 1:trials){
+          renull = ldgsingle(xt, yt[sample(1:nt,nt)], 
+                             hx=hx, hy=hy,
+                             wd=wd, kernel = 'box',
+                             bandlist = c('fix'),
+                             chooset = FALSE,
+                             stat = 'normgap', opt=TRUE)
+          Tvec = renull[[1]][['fix']]
+          tmiselist[i] = max(Tvec)
+          Tvec = Tvec[!is.na(Tvec)]
+          sTvec = sort(Tvec)
+          sTvec = sTvec[which(sTvec>0)]
+          if(length(sTvec)<5)tinflectlist[i]=NA
+          else{
+            s1gapvec = sTvec[1:(length(sTvec)-2)]-sTvec[2:(length(sTvec)-1)]
+            s2gapvec = sTvec[2:(length(sTvec)-1)]-sTvec[3:(length(sTvec))]
+            sgapvec = s2gapvec-s1gapvec
+            nstar = localMaxima(sgapvec)
+            tinflectlist[i] = max(sTvec[nstar])
+            if(tinflectlist[i]==-Inf)tinflectlist[i]=NA
+          }
         }
       }
     }
-    if(!is.null(re[[2]])){
-      t = re[[2]]
-    }else{
-      #if(stat=='normgap'){
-      #  t = qnorm(1-1/(nt)^cutoff)/nt^(1/3)
-      #}
-      #if(stat=='probnormgap'){
-      #  t =qnorm(1-1/(nt)^cutoff)
-      #}
-      t = quantile(tlist, probs = 0.95, na.rm = TRUE)
-      if(is.na(t))t=qnorm(1-1/(nt)^cutoff)/nt^(1/3)
-    }
-    result[id] = re[[1]][[band]]
-    return(list(val = mean(result>t), Tvec = result))
+    t_norm = qnorm(1-1/(nt)^cutoff)/(wd*sqrt(sd(xt)*sd(yt))*nt^(1/3))
+    t_mise = quantile(tmiselist, prob=0.5, na.rm = TRUE)
+    t_inflect = quantile(tinflectlist, prob=0.5,na.rm = TRUE)
+    
+    t = t_norm
+    if(chooset=='inflect' & !is.na(t_inflect))t=t_inflect
+    if(chooset=='mise' & !is.na(t_mise))t=t_mise
+    if(chooset=='miseold' & !is.null(t_miseold))t=t_miseold
+
+    result[id] = re[[1]][['fix']]
+    return(list(val = mean(result>t), Tvec = result, 
+                t = list(inflect = t_inflect, mise=t_mise, norm=t_norm, miseold=t_miseold)))
   }else{
-    return(list(val =0, Tvec = NULL))
+    return(list(val =0, Tvec = NULL, t = NULL))
   }
 }
 
@@ -394,8 +397,7 @@ localMaxima <- function(x){
 }
 
 #' @export
-ldgsingle<-function(x,y, id = NULL,
-                    dall = NULL, knn = 100, # the distance matrix of samples using all features
+ldgsingle<-function(x,y, dall = NULL, knn = 100, # the distance matrix of samples using all features
                     dx = NULL, dy = NULL,
                     rx = NULL, ry = NULL,
                     wd = 1, qd = 0.1,
@@ -431,7 +433,6 @@ ldgsingle<-function(x,y, id = NULL,
 
   gaplist = list()
   t=NULL
-  t_thred=NULL
   for(band in bandlist){
     if(band=='fix'){
       if(is.null(hx))hx = wd*sd(x)
@@ -532,62 +533,8 @@ ldgsingle<-function(x,y, id = NULL,
       hlist = c(hx, hy)
       t = sqrt(mise(pmatlist, hlist, kernel))
     }
-
-    if(length(id)>4 & length(id)!=n){
-      if(length(hx)>1)hx = hx[id]
-      if(length(hy)>1)hy = hy[id]
-
-      if(chooset & band=='fix'){
-        pmatlist = list(dx[id,id], dy[id,id])
-        hlist = c(hx, hy)
-        t_thred =  sqrt(mise(pmatlist, hlist, kernel))
-      }
-
-      fx = k(dx[id,id]/hx)/hx
-      fy = k(dy[id,id]/hy)/hy
-      if(!is.null(dall)){
-        fx = fx*1*(dall[id,id]<knn)
-        fy = fy*1*(dall[id,id]<knn)
-      }
-      fxy = fx*fy
-      fxyhat =  rowMeans(fxy)
-      fxhat = rowMeans(fx)
-      fyhat = rowMeans(fy)
-      if(stat=='gap'){
-        gap = fxyhat - fxhat*fyhat
-      }
-      if(stat=='probnormgap'){
-        gap = (4*hx*hy*(fxyhat - fxhat*fyhat)*sqrt(length(id)-1))/sqrt(2*hx*fxhat*(1-2*hx*fxhat)*2*hy*fyhat*(1-2*hy*fyhat))
-      }
-      if(stat=='normgap'){
-        gap = (fxyhat - fxhat*fyhat)/sqrt(fxhat*fyhat)
-      }
-      if(stat=='probmi'){
-        gap = hx*hy*fxyhat*log(fxyhat/fxhat*fyhat)
-      }
-      if(stat=='mi'){
-        gap = fxyhat*log(fxyhat/fxhat*fyhat)
-      }
-      if(stat=='joint'){
-        gap = fxyhat
-      }
-      if(stat=='fx'){
-        gap = fxhat
-      }
-      if(stat=='fy'){
-        gap = fyhat
-      }
-      if(stat=='fyfy'){
-        gap = fyhat*fyhat
-      }
-      if(stat=='chi'){
-        gap = (fxyhat - fxhat*fyhat)/(fxhat*fyhat)
-      }
-      gaplist[[paste0(band,'_thred')]] = rep(0,n)
-      gaplist[[paste0(band,'_thred')]][id] = gap
-    }
   }
-  return(list(gaplist, t, t_thred))
+  return(list(gaplist, t))
 }
 
 
@@ -608,9 +555,9 @@ kernallist<-function(method){
 
 
 
-# dmatlist: a list distance matrix for x and y
+# dmatlist: a list distance matrix for x_1, \dots, x_d (d-dimensional random variable)
 # kernel: choice of kernel
-# hlist: a list bandwidth vectors for x and y
+# hlist: a list bandwidth vectors for x_1, \dots, x_d (d-dimensional random variable)
 #' @export
 mise<-function(dmatlist, hlist, kernel){
   if(kernel == 'box'){
@@ -645,7 +592,7 @@ mise<-function(dmatlist, hlist, kernel){
   ans = ans + sigma^d/n
   ansall = 2*ans/(prod(hlist))
 
-  anslist = c(anslist[[1]]*anslist[[1]], ansall)
+  anslist = c(Reduce('*', anslist), ansall)
   return(abs(max(anslist)))
 }
 

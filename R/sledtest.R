@@ -5,14 +5,12 @@ getDiffMatrix<-function(X,Y,methods,thred=-Inf,info=0, norm = FALSE, abs = FALSE
     CX <- matdep(X, methods = methods,
                           thred = thred, info=paste0(extrainfo,'X'),trial=info,
                           norm = norm, abs = abs, 
-                          stat = 'normgap', band = 'fix',
-                          wd = 1, qd = 0.05, opt=TRUE, cutoff =1,
+                          wd = 1, 
                           dir=dir,ncores=ncores)
     CY <- matdep(Y, methods = methods,
                           thred = thred, info=paste0(extrainfo,'Y'),trial=info,
                           norm = norm, abs = abs, 
-                          stat = 'normgap', band = 'fix',
-                          wd = 1, qd = 0.05, opt=TRUE, cutoff =1,
+                          wd = 1, 
                           dir=dir,ncores=ncores)
     methods = names(CX)
     for(i in 1:length(methods)){
