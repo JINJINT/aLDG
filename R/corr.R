@@ -84,7 +84,7 @@ bidep<-function(x, y, sx = NULL, sy = NULL, methods=NULL, all = FALSE,
       corr[method] = result[length(result)]
     }
     if(method=='MIC'){
-      corr[method]=energy::mine(x, y)$MIC
+      corr[method]=minerva::mine(x, y)$MIC
     }
     if(method=='MRank'){
       corr[method]=incSubseq(x,y,k=5)/choose(n,5)
