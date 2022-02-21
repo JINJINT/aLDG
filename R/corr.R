@@ -63,7 +63,7 @@ bidep<-function(x, y, sx = NULL, sy = NULL, methods=NULL, all = FALSE,
       corr[method] = cor(x, y, method = tolower(method))
     }
     if(method=='TauStar'){
-      a= TauStar::tStar(x, y)
+      a= tStar(x, y)
       # theoretically, taustar lies in range [-1/3,2/3], where 0 represents independence,
       # therefore we do the following to rescale it to [-1,1] with 0 still represents independence
       if(a<=0)corr[method]=a*3
