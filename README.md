@@ -50,4 +50,4 @@ matdep(A%*%dat,methods=c('Pearson','TauStar','HSIC','dCor','aLDG'), ncores=NULL)
 ## Reference:
 Check out our paper for aLDG here:
 
-From local to global gene co-expression estimation using single-cell RNA-seq data.(to be submitted)
+From local to global gene co-expression estimation using single-cell RNA-seq data. (to be submitted)

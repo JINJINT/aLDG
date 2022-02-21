@@ -45,7 +45,7 @@
 #' @export
 bidep<-function(x, y, sx = NULL, sy = NULL, methods=NULL, all = FALSE,
                       thred=-Inf, hx=NULL, hy=NULL,
-                      wd = 1){
+                      wd = 1, aldg_thred='error'){
 
   if(length(x)!=length(y)){
     print('The length of x and y should be the same!')
@@ -90,7 +90,7 @@ bidep<-function(x, y, sx = NULL, sy = NULL, methods=NULL, all = FALSE,
     }
     if(method=='aLDG'){
       ans=aldg(x, y, sx = sx, sy = sy, thred = thred, wd = wd, 
-                       trials=max(floor(1000/n),5), chooset = 'error')
+                       trials=max(floor(1000/n),5), chooset = aldg_thred)
       corr[method] = ans$val 
     }
   }

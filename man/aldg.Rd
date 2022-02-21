@@ -14,8 +14,7 @@ aldg(
   hy = NULL,
   wd = 1,
   cutoff = 1,
-  chooset = "inflect",
-  mise = FALSE,
+  chooset = "error",
   trials = 5
 )
 }

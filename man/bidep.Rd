@@ -14,12 +14,8 @@ bidep(
   thred = -Inf,
   hx = NULL,
   hy = NULL,
-  band = "fix",
   wd = 1,
-  qd = 0.1,
-  opt = TRUE,
-  stat = "normgap",
-  cutoff = 1
+  aldg_thred = "error"
 )
 }
 \arguments{
