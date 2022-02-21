@@ -53,11 +53,11 @@ pairperm<-function(n=300, alpha=0.05, eps=0.3, nperm =200, ncores=10,
                    wd=1, rerunmethods=c(), info=''){
 
   if(all){
-    typelist = c(#'indep','linear',
-                 #'step','ubern','circle','spiral',
-                 #'quad','wshape','diamond','multi',
-                 'gauss30','gauss31','gauss32','gauss33')#,
-                 #'nb30','nb31','nb32','nb33')
+    typelist = c('indep','linear',
+                 'step','ubern','circle','spiral',
+                 'quad','wshape','diamond','multi',
+                 'gauss30','gauss31','gauss32','gauss33',
+                 'nb30','nb31','nb32','nb33')
     methods = c('Pearson','Spearman','Kendall','TauStar','dCor','HSIC','HoeffD','MIC','MRank','aLDG')
   }
 
@@ -70,7 +70,7 @@ pairperm<-function(n=300, alpha=0.05, eps=0.3, nperm =200, ncores=10,
       x = data$x
       y = data$y
       bound=-Inf
-      if(grepl('nb', type, fixed = TRUE))bound=0
+      #if(grepl('nb', type, fixed = TRUE))bound=0
       result = bidep(x, y, thred=bound, methods = methods, wd=wd)
       if(nperm>0){
         nulls <- mclapply(1:nperm, function(i){
@@ -89,7 +89,7 @@ pairperm<-function(n=300, alpha=0.05, eps=0.3, nperm =200, ncores=10,
       x = re[['dat']]$x
       y = re[['dat']]$y
       bound=-Inf
-      if(grepl('nb', type, fixed = TRUE))bound=0
+      #if(grepl('nb', type, fixed = TRUE))bound=0
       restmethod = setdiff(methods, names(re[['val']]))
       restmethod = union(restmethod, rerunmethods)
       if(length(restmethod)>0){
@@ -128,8 +128,8 @@ simu_pair<-function(i){
   for(n in c(50,75,100,150,200)){ # j as sample size
     cat(paste0('trial ',i, ', sample size ',n,'\n'))
     pairperm(n=n, nperm = 200, ncores = 10, eps=0.3, wd=1, 
-             rerunmethods = c(), info='',
-             filename = paste0('./dat/permpairmixneg_m',i))
+             rerunmethods = c('Pearson','Spearman','Kendall'), info='',
+             filename = paste0('./dat/permpair_m',i))
   }
 }
 
@@ -143,13 +143,13 @@ dir.create('./plots')
 
 powmean = list()
 valmean = list()
-typelist = c(#'indep','linear',
-             #'step','ubern','circle','spiral',
-             #'quad','wshape','diamond','multi',
+typelist = c('indep','linear',
+             'step','ubern','circle','spiral',
+             'quad','wshape','diamond','multi',
              'gauss30','gauss31','gauss32','gauss33',
              'nb30','nb31','nb32','nb33')
 
-methods = c('Pearson','Spearman','Kendall','TauStar','dCor','HSIC','HoeffD','MIC','MRank',
+methods = c('Pearson','Spearman','Kendall','TauStar','dCor','HSIC','HoeffD','HHG','MIC','MRank',
             'aLDG')
 for(type in typelist){
   nlist = c(50,75,100,150,200)
@@ -160,16 +160,16 @@ for(type in typelist){
     val = c()
     for(i in 1:50){
       print(paste0(type, ', n ',nlist[n], ', i',i))
-      #if(i<=20){
-      #  ans = pairperm(n=nlist[n], eps=0.3, nperm=200, typelist = c(type), 
-      #                 methods=c('Pearson','Spearman','Kendall','TauStar','dCor','HSIC','HoeffD','HHG','MIC','MRank','aLDG'),
-      #                all=FALSE, filename=paste0('./dat/permpair_m',i)) 
-      #}else{
+      if(i<=20){
+        ans = pairperm(n=nlist[n], eps=0.3, nperm=200, typelist = c(type), 
+                       methods=c('Pearson','Spearman','Kendall','TauStar','dCor','HSIC','HoeffD','HHG','MIC','MRank','aLDG'),
+                      all=FALSE, filename=paste0('./dat/permpair_m',i)) 
+      }else{
         ans = pairperm(n=nlist[n], eps=0.3, nperm=200, typelist = c(type), 
                      methods=c('Pearson','Spearman','Kendall','TauStar','dCor','HSIC','HoeffD','MIC','MRank','aLDG'),
                      rerunmethods = c(),
-                     all=FALSE, filename=paste0('./dat/permpairmix_m',i))
-      #}
+                     all=FALSE, filename=paste0('./dat/permpair_m',i))
+      }
       val = rbind(val,ans[['val']][methods])
       power = rbind(power, ans[['rej']][methods])
     }
@@ -186,8 +186,6 @@ for(type in typelist){
 
 # plot power
 tmp_list <- list()
-powmean[['nb33']][5,'aLDG']=1
-powmean[['nb30']][2,'aLDG']=0.9
 
 for(i in 1:length(typelist)){
   dat = data.frame(powmean[[typelist[i]]])
@@ -202,7 +200,7 @@ for(i in 1:length(typelist)){
                        values = c("pink","darkorange","yellowgreen","darkgreen",
                                   "skyblue","steelblue",
                                   "purple3",
-                                  #"darkred",
+                                  "darkred",
                                   "tan","tan4",
                                   "black"))+
     xlab('sample size') +
@@ -210,15 +208,15 @@ for(i in 1:length(typelist)){
     ggtitle(typelist[i])+
     theme(legend.position='none')
 }
-ml=marrangeGrob(grobs = tmp_list, nrow = 2, ncol=4,
-                layout_matrix = matrix(1:8, 2, 4, TRUE))
-ggsave("./plots/finalmixzerobipower.pdf", ml, width=7, height=3.5)
+ml=marrangeGrob(grobs = tmp_list, nrow = 4, ncol=5,
+                layout_matrix = matrix(1:20, 4, 5, TRUE))
+ggsave("./plots/finalallbipower.pdf", ml, width=10, height=8)
 
 # plot value
 tmp_list = list()
 for(i in 1:length(typelist)){
   dat = data.frame(methods = factor(methods, levels=methods), 
-                   value = valmean[[typelist[i]]][3,])
+                   value = valmean[[typelist[i]]][5,])
   dat[is.na(dat)]=0
   mat = melt(dat)
   alpha=1
@@ -231,7 +229,7 @@ for(i in 1:length(typelist)){
                       values = c("pink","darkorange","yellowgreen","darkgreen",
                                  "skyblue","steelblue",
                                  "purple3", 
-                                 #"firebrick",
+                                 "firebrick",
                                  "tan","tan4",
                                  "black"))+
     xlab('')+
@@ -242,8 +240,8 @@ for(i in 1:length(typelist)){
           axis.text.x = element_blank())
 }
 ml=ggarrange(plotlist = tmp_list, 
-             nrow = 2, ncol=4)
-ggsave("./plots/finalmixvalue.pdf", ml, width=7, height=3.5)
+             nrow = 4, ncol=5)
+ggsave("./plots/finalvalue.pdf", ml, width=10, height=8)
 
 
 #======== get results for the monotonicity experiment

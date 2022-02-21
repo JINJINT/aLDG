@@ -44,8 +44,8 @@
 #' @rdname bidep
 #' @export
 bidep<-function(x, y, sx = NULL, sy = NULL, methods=NULL, all = FALSE,
-                      thred=-Inf, hx=NULL, hy=NULL, band = 'fix',
-                      wd = 1, qd = 0.1, opt = TRUE, stat = 'normgap', cutoff = 1){
+                      thred=-Inf, hx=NULL, hy=NULL,
+                      wd = 1){
 
   if(length(x)!=length(y)){
     print('The length of x and y should be the same!')
@@ -90,7 +90,7 @@ bidep<-function(x, y, sx = NULL, sy = NULL, methods=NULL, all = FALSE,
     }
     if(method=='aLDG'){
       ans=aldg(x, y, sx = sx, sy = sy, thred = thred, wd = wd, 
-                        mise=FALSE,trials=max(floor(1000/n),5), chooset = 'inflect')
+                       trials=max(floor(1000/n),5), chooset = 'error')
       corr[method] = ans$val 
     }
   }
@@ -270,8 +270,8 @@ matdep<-function(data, methods=NULL,
 #' @export
 aldg<-function(x, y, sx = NULL, sy = NULL,
                thred = -Inf, hx=NULL, hy=NULL, 
-               wd = 1,  cutoff = 1, chooset = 'inflect',
-               mise = FALSE, trials=5){
+               wd = 1,  cutoff = 1, chooset = 'error',
+               trials=5){
   
   n = length(x)
   
@@ -304,7 +304,7 @@ aldg<-function(x, y, sx = NULL, sy = NULL,
                      hx=hx, hy=hy,
                      wd=wd, kernel = 'box',
                      bandlist = c('fix'),
-                     chooset = mise,
+                     chooset = FALSE,
                      stat = 'normgap', opt=TRUE)
       t_miseold = re[[2]]
       if(trials>0){
@@ -335,7 +335,7 @@ aldg<-function(x, y, sx = NULL, sy = NULL,
                      hx=hx, hy=hy,
                      wd=wd, kernel = 'box',
                      bandlist = c('fix'),
-                     chooset = mise,
+                     chooset = FALSE,
                      stat = 'normgap', opt=TRUE)
       t_miseold = re[[2]]
       if(trials>0){
@@ -369,8 +369,7 @@ aldg<-function(x, y, sx = NULL, sy = NULL,
     
     t = t_norm
     if(chooset=='inflect' & !is.na(t_inflect))t=t_inflect
-    if(chooset=='mise' & !is.na(t_mise))t=t_mise
-    if(chooset=='miseold' & !is.null(t_miseold))t=t_miseold
+    if(chooset=='error' & !is.na(t_mise))t=t_mise
 
     result[id] = re[[1]][['fix']]
     return(list(val = mean(result>t), Tvec = result, 
