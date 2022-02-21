@@ -63,7 +63,7 @@ bidep<-function(x, y, sx = NULL, sy = NULL, methods=NULL, all = FALSE,
       corr[method] = cor(x, y, method = tolower(method))
     }
     if(method=='TauStar'){
-      a= tStar(x, y)
+      a= TauStar::tStar(x, y)
       # theoretically, taustar lies in range [-1/3,2/3], where 0 represents independence,
       # therefore we do the following to rescale it to [-1,1] with 0 still represents independence
       if(a<=0)corr[method]=a*3
@@ -74,17 +74,17 @@ bidep<-function(x, y, sx = NULL, sy = NULL, methods=NULL, all = FALSE,
     }
     if(method=='HSIC'){
       # we normalize in this way such that HSIC is in [0,1]
-      corr[method] = dhsic(x,y)$dHSIC/sqrt(dhsic(x,x)$dHSIC * dhsic(y,y)$dHSIC)
+      corr[method] = dHSIC::dhsic(x,y)$dHSIC/sqrt(dhsic(x,x)$dHSIC * dhsic(y,y)$dHSIC)
     }
     if(method=='HoeffD'){
-      corr[method]= hoeffd(x,y)$D[1,2]
+      corr[method]= Hmisc::hoeffd(x,y)$D[1,2]
     }
     if(method=='HHG'){
-      result = hhg.univariate.ind.stat(x, y)$statistic
+      result = HHG::hhg.univariate.ind.stat(x, y)$statistic
       corr[method] = result[length(result)]
     }
     if(method=='MIC'){
-      corr[method]=mine(x, y)$MIC
+      corr[method]=energy::mine(x, y)$MIC
     }
     if(method=='MRank'){
       corr[method]=incSubseq(x,y,k=5)/choose(n,5)
