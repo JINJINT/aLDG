@@ -25,6 +25,7 @@ Imports:
     matrixcalc,
     pracma,
     MASS,
+    HHG,
     abind
 License: GPL-3 + file LICENSE    
 RoxygenNote: 7.1.1
