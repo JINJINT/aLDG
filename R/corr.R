@@ -42,6 +42,7 @@
 #' # Load example data
 #' ans = bidep(runif(10),runif(10),methods='aLDG')
 #' @rdname bidep
+#' @import TauStar HHG energy dHSIC Hmisc minerva
 #' @export
 bidep<-function(x, y, sx = NULL, sy = NULL, methods=NULL, all = FALSE,
                       thred=-Inf, hx=NULL, hy=NULL,
