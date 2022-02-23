@@ -320,7 +320,7 @@ aldg<-function(x, y, sx = NULL, sy = NULL,
           tmiselist[i] = max(Tvec)
           sTvec = sort(Tvec)
           sTvec = sTvec[which(sTvec>0)]
-          if(length(sTvec)<5)tinfectlist[i]=NA
+          if(length(sTvec)<5)tinflectlist[i]=NA
           else{
             s1gapvec = sTvec[1:(length(sTvec)-2)]-sTvec[2:(length(sTvec)-1)]
             s2gapvec = sTvec[2:(length(sTvec)-1)]-sTvec[3:(length(sTvec))]
