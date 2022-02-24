@@ -202,7 +202,6 @@ matdep<-function(data, methods=NULL,
                         .export=c('ldgsingle','kernallist','aldg','bidep'),
                         .packages = c('dHSIC','TauStar','minerva','Hmisc','energy')
       )%dopar% {
-        devtools::load_all('./rankPatterns')
         return(compute_single(i))
         }
       stopCluster(cl)
