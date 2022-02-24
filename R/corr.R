@@ -19,7 +19,6 @@
 #'            -- 'HSIC': Hilbert-Schmidt Independence Criterion (normalized to 0,1)
 #'            -- 'HoeffD': Hoeffding's D
 #'            -- 'HHG': HHG
-#'            -- 'MRank': Matching Ranks
 #'            -- 'MIC': Maximal Information Coefficient
 #'            -- 'aLDG': averaged Local Density Gap
 #' @param all: logical value, if true then compute for all methods listed
@@ -86,9 +85,9 @@ bidep<-function(x, y, sx = NULL, sy = NULL, methods=NULL, all = FALSE,
     if(method=='MIC'){
       corr[method]=minerva::mine(x, y)$MIC
     }
-    if(method=='MRank'){
-      corr[method]=incSubseq(x,y,k=5)/choose(n,5)
-    }
+    # if(method=='MRank'){
+    #   corr[method]=incSubseq(x,y,k=5)/choose(n,5)
+    # }
     if(method=='aLDG'){
       ans=aldg(x, y, sx = sx, sy = sy, thred = thred, wd = wd, 
                        trials=max(floor(1000/n),5), chooset = aldg_thred)
